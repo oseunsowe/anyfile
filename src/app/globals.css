@@ -1,0 +1,230 @@
+@import "tailwindcss";
+
+/* Class-based dark mode. Light-first per plan.md §4.1 — `dark` is opt-in. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------
+   Design tokens
+   Sourced from asset/ core-screens reference. Every colour used in the app must
+   come from this layer so light/dark stay in lockstep and the brand accent is a
+   one-line change.
+   --------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: light;
+
+  /* Neutrals — cool, faintly lavender-tinted, matching the reference canvas */
+  --afk-canvas: #f4f5fa;
+  --afk-canvas-alt: #eceef7;
+  --afk-surface: #ffffff;
+  --afk-surface-muted: #fafbff;
+  --afk-border: #e6e8f2;
+  --afk-border-strong: #d2d7e8;
+
+  --afk-ink: #0d1220;
+  --afk-ink-muted: #5b647d;
+  --afk-ink-subtle: #8b93a8;
+  --afk-ink-inverse: #ffffff;
+
+  /* Brand accent — the indigo of the AnyFileKits mark */
+  --afk-brand: #4f46e5;
+  --afk-brand-hover: #4338ca;
+  --afk-brand-soft: #eef0fe;
+  --afk-brand-soft-hover: #e2e5fd;
+  --afk-brand-ink: #3730a3;
+
+  /* Primary CTA in the reference is near-black, not brand indigo */
+  --afk-solid: #0d1220;
+  --afk-solid-hover: #1e263c;
+
+  /* Semantic states */
+  --afk-success: #0f9d6e;
+  --afk-success-soft: #e4f7f0;
+  --afk-warning: #b45309;
+  --afk-warning-soft: #fdf3e3;
+  --afk-danger: #dc2626;
+  --afk-danger-soft: #fdecec;
+
+  /* Tool-family accents (§3 core tool families) */
+  --afk-cat-pdf: #3b82f6;
+  --afk-cat-pdf-soft: #e8f1ff;
+  --afk-cat-image: #10b981;
+  --afk-cat-image-soft: #e2f6ef;
+  --afk-cat-ai: #6366f1;
+  --afk-cat-ai-soft: #ecedfe;
+  --afk-cat-smart: #ec4899;
+  --afk-cat-smart-soft: #fdeaf3;
+
+  --afk-focus: #6366f1;
+
+  --afk-shadow-sm: 0 1px 2px rgba(13, 18, 32, 0.06);
+  --afk-shadow-md: 0 4px 16px -4px rgba(13, 18, 32, 0.1), 0 1px 3px rgba(13, 18, 32, 0.05);
+  --afk-shadow-lg: 0 18px 48px -14px rgba(13, 18, 32, 0.16), 0 2px 6px rgba(13, 18, 32, 0.05);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --afk-canvas: #0a0e1a;
+  --afk-canvas-alt: #0f1424;
+  --afk-surface: #141a2c;
+  --afk-surface-muted: #182036;
+  --afk-border: #262f47;
+  --afk-border-strong: #364058;
+
+  --afk-ink: #f2f4fa;
+  --afk-ink-muted: #9aa3bd;
+  --afk-ink-subtle: #6f7893;
+  --afk-ink-inverse: #0d1220;
+
+  --afk-brand: #8b83ff;
+  --afk-brand-hover: #a29bff;
+  --afk-brand-soft: #1e2245;
+  --afk-brand-soft-hover: #262b53;
+  --afk-brand-ink: #c7c2ff;
+
+  --afk-solid: #f2f4fa;
+  --afk-solid-hover: #dfe3ef;
+
+  --afk-success: #34d399;
+  --afk-success-soft: #11291f;
+  --afk-warning: #fbbf24;
+  --afk-warning-soft: #2b2210;
+  --afk-danger: #f87171;
+  --afk-danger-soft: #2d1618;
+
+  --afk-cat-pdf: #60a5fa;
+  --afk-cat-pdf-soft: #14243f;
+  --afk-cat-image: #34d399;
+  --afk-cat-image-soft: #0f2a23;
+  --afk-cat-ai: #a5b4fc;
+  --afk-cat-ai-soft: #1c2145;
+  --afk-cat-smart: #f472b6;
+  --afk-cat-smart-soft: #33162a;
+
+  --afk-focus: #a5b4fc;
+
+  --afk-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --afk-shadow-md: 0 4px 16px -4px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --afk-shadow-lg: 0 18px 48px -14px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* `inline` so utilities emit var() and follow the cascade into `.dark`. */
+@theme inline {
+  --color-canvas: var(--afk-canvas);
+  --color-canvas-alt: var(--afk-canvas-alt);
+  --color-surface: var(--afk-surface);
+  --color-surface-muted: var(--afk-surface-muted);
+  --color-line: var(--afk-border);
+  --color-line-strong: var(--afk-border-strong);
+
+  --color-ink: var(--afk-ink);
+  --color-ink-muted: var(--afk-ink-muted);
+  --color-ink-subtle: var(--afk-ink-subtle);
+  --color-ink-inverse: var(--afk-ink-inverse);
+
+  --color-brand: var(--afk-brand);
+  --color-brand-hover: var(--afk-brand-hover);
+  --color-brand-soft: var(--afk-brand-soft);
+  --color-brand-soft-hover: var(--afk-brand-soft-hover);
+  --color-brand-ink: var(--afk-brand-ink);
+
+  --color-solid: var(--afk-solid);
+  --color-solid-hover: var(--afk-solid-hover);
+
+  --color-success: var(--afk-success);
+  --color-success-soft: var(--afk-success-soft);
+  --color-warning: var(--afk-warning);
+  --color-warning-soft: var(--afk-warning-soft);
+  --color-danger: var(--afk-danger);
+  --color-danger-soft: var(--afk-danger-soft);
+
+  --color-cat-pdf: var(--afk-cat-pdf);
+  --color-cat-pdf-soft: var(--afk-cat-pdf-soft);
+  --color-cat-image: var(--afk-cat-image);
+  --color-cat-image-soft: var(--afk-cat-image-soft);
+  --color-cat-ai: var(--afk-cat-ai);
+  --color-cat-ai-soft: var(--afk-cat-ai-soft);
+  --color-cat-smart: var(--afk-cat-smart);
+  --color-cat-smart-soft: var(--afk-cat-smart-soft);
+
+  --color-focus: var(--afk-focus);
+
+  --radius-control: 0.625rem;
+  --radius-card: 1rem;
+  --radius-panel: 1.25rem;
+
+  --shadow-sm: var(--afk-shadow-sm);
+  --shadow-md: var(--afk-shadow-md);
+  --shadow-lg: var(--afk-shadow-lg);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+@layer base {
+  * {
+    border-color: var(--afk-border);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--afk-canvas);
+    color: var(--afk-ink);
+    font-family: var(--font-sans);
+  }
+
+  /* WCAG 2.2 AA — visible focus everywhere, never removed (§12) */
+  :focus-visible {
+    outline: 2px solid var(--afk-focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+}
+
+@layer utilities {
+  /* Skip link — revealed on keyboard focus only */
+  .skip-link {
+    position: absolute;
+    left: 1rem;
+    top: -100%;
+    z-index: 100;
+    transition: top 0.15s ease;
+  }
+  .skip-link:focus-visible {
+    top: 1rem;
+  }
+}
+
+/* §12 — honour reduced-motion for every decorative animation */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes afk-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
