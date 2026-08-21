@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit -p .
+
+      - name: Lint
+        run: npm run lint -- --max-warnings=0
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          # Placeholder values so the production build doesn't fail on the
+          # required-secret checks (src/lib/auth/demoSession.ts) — these are
+          # never used at runtime, only to prove the build succeeds. Real
+          # deployments set their own secrets on the hosting platform.
+          AUTH_SESSION_SECRET: ci-build-placeholder-not-used-at-runtime
+          NEXT_PUBLIC_SITE_URL: https://anyfilekits.com

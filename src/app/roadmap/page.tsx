@@ -13,7 +13,6 @@ const groups = [
   {
     title: "Cloud AI",
     items: [
-      "Remove background provider now wired behind server key",
       "AI upscaling",
       "Queueing and retries",
       "Temporary object storage with TTL deletion",
@@ -22,7 +21,7 @@ const groups = [
   {
     title: "PDF parity",
     items: [
-      "Split, extract, and delete pages",
+      "PDF compression",
       "PDF to image conversion",
       "Password protect and unlock",
       "OCR and searchable output",
@@ -31,18 +30,16 @@ const groups = [
   {
     title: "Accounts and billing",
     items: [
-      "User auth",
+      "Real user accounts (today's sign-in is a single shared demo login)",
       "Saved workflows and history",
-      "Stripe subscriptions",
-      "Entitlements and usage limits",
+      "Stripe subscriptions (today's plans are a session preview, nothing is charged)",
     ],
   },
   {
     title: "Trust and operations",
     items: [
       "Monitoring and alerting",
-      "Security hardening and CSP",
-      "CI quality gates",
+      "Additional security hardening (rate limiting, nonce-based CSP)",
       "Cross-browser and mobile matrix",
     ],
   },
