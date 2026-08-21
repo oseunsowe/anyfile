@@ -7,7 +7,10 @@ import { RelatedTools } from "@/components/seo/RelatedTools";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { Container } from "@/components/ui/Container";
 import { PrivacyBadge } from "@/components/ui/Badge";
+import { SmartFixConsole } from "@/components/home/SmartFixConsole";
 import { ToolWorkspace } from "@/components/tools/ToolWorkspace";
+import { readDemoSession } from "@/lib/auth/demoSession";
+import { isPaidPlan } from "@/lib/plans";
 import { pageMetadata, toolJsonLd } from "@/lib/seo";
 import { getIndexableTools, getTool } from "@/lib/tools";
 import { getToolContent } from "@/lib/toolContent";
@@ -49,6 +52,9 @@ export default async function ToolPage({ params }: PageProps<"/[slug]">) {
 
   if (!tool || !content || tool.status !== "live") notFound();
 
+  const session = await readDemoSession();
+  const isPaidUser = session !== null && isPaidPlan(session.plan);
+
   return (
     <>
       <section className="border-b border-line bg-surface">
@@ -73,18 +79,24 @@ export default async function ToolPage({ params }: PageProps<"/[slug]">) {
               <PrivacyBadge mode={tool.processing} className="mt-6" />
             </div>
 
-            <ToolWorkspace
-              preset={content.preset}
-              accept={content.accept}
-              runLabel={tool.name}
-            />
+            {content.preset.kind === "smartfix" ? (
+              <SmartFixConsole />
+            ) : (
+              <ToolWorkspace
+                preset={content.preset}
+                accept={content.accept}
+                runLabel={tool.name}
+                lead={content.lead}
+                actions={content.actions}
+              />
+            )}
           </div>
         </Container>
       </section>
 
       {/* §7: one ad below the tool input, never between upload and processing. */}
       <div className="border-b border-line py-8">
-        <AdSlot format="leaderboard" />
+        <AdSlot format="leaderboard" isPaidUser={isPaidUser} />
       </div>
 
       <FaqSection entries={content.faqs} />

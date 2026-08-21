@@ -10,6 +10,7 @@ const analysis = (overrides: Partial<FileAnalysis> = {}): FileAnalysis => ({
   extensionMismatch: false,
   width: 4032,
   height: 3024,
+  pageCount: null,
   hasGpsMetadata: false,
   findings: [],
   ...overrides,
@@ -37,13 +38,13 @@ describe("buildPlan", () => {
     expect(steps.at(-1)?.id).toBe("compress");
   });
 
-  it("removes the background before resizing, so the cutout runs at full resolution", () => {
+  it("skips remove-background when cloud AI is disabled", () => {
     const steps = buildPlan({
       analysis: analysis(),
       requirement: { maxWidth: 1000 },
       actions: ["remove-background"],
     });
-    expect(ids(steps)).toEqual(["remove-background", "resize"]);
+    expect(ids(steps)).toEqual(["resize"]);
   });
 
   it("skips conversion when the file is already the target format", () => {
@@ -88,14 +89,12 @@ describe("buildPlan", () => {
     expect(steps[0].optional).toBe(false);
   });
 
-  it("flags upscaling as cloud work and says it cannot add real detail", () => {
+  it("skips upscaling when cloud AI is disabled", () => {
     const steps = buildPlan({
       analysis: analysis({ width: 800, height: 800 }),
       requirement: { minWidth: 2000, minHeight: 2000 },
     });
-    expect(steps[0].id).toBe("upscale");
-    expect(steps[0].processing).toBe("cloud");
-    expect(steps[0].reason).toMatch(/cannot add real detail/i);
+    expect(steps).toHaveLength(0);
   });
 
   it("produces nothing when there is no requirement and no problem", () => {

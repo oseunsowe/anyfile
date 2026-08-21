@@ -2,9 +2,13 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+import { AdProvider } from "@/components/ads/AdProvider";
+import { ConsentBanner } from "@/components/ads/ConsentBanner";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { readDemoSession } from "@/lib/auth/demoSession";
+import { EntitlementsProvider, type Entitlements } from "@/lib/entitlements";
 import { organizationJsonLd } from "@/lib/seo";
 import { site } from "@/lib/site";
 
@@ -39,7 +43,14 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const session = await readDemoSession();
+  const entitlements: Entitlements = {
+    loggedIn: session !== null,
+    email: session?.sub ?? null,
+    plan: session?.plan ?? "free",
+  };
+
   return (
     <html
       lang="en-US"
@@ -49,11 +60,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <a href="#main" className="skip-link rounded-control bg-solid px-4 py-2 text-sm font-medium text-ink-inverse">
           Skip to content
         </a>
-        <SiteHeader />
-        <main id="main" className="flex-1">
-          {children}
-        </main>
-        <SiteFooter />
+        <EntitlementsProvider value={entitlements}>
+          <AdProvider />
+          <SiteHeader entitlements={entitlements} />
+          <main id="main" className="flex-1">
+            {children}
+          </main>
+          <SiteFooter />
+          <ConsentBanner />
+        </EntitlementsProvider>
         <JsonLd data={organizationJsonLd()} />
       </body>
     </html>

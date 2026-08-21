@@ -15,6 +15,10 @@ npm run test:e2e  # drives the real pipeline in Chromium — needs `npm run dev`
 node scripts/build-icons.mjs   # regenerate the icon subset after editing its list
 ```
 
+Copy `.env.example` to `.env.local` and set domain/ad variables before
+production deploy. For local browser access from `127.0.0.1`,
+`NEXT_ALLOWED_DEV_ORIGINS` is already prefilled.
+
 ## Where things are
 
 ```text
@@ -33,7 +37,7 @@ src/
     tools/      FileDrop, DiagnosisPanel, PlanPreview, ProofPanel,
                 TaskSurface (shared task loop), ToolWorkspace, ToolCard
     seo/        JsonLd, Breadcrumbs, FaqSection, RelatedTools
-    ads/        AdSlot (reserved dimensions)
+    ads/        AdSlot + AdProvider + consent banner wiring
     home/       Hero, SmartFixConsole, FlowBand, marketing sections
   workers/
     pipeline.worker.ts   chaining engine: runs the plan off the main thread

@@ -11,7 +11,7 @@ const PILLARS: { icon: IconName; term: string; detail: string }[] = [
     detail: "Format, size, dimensions and hidden location data — from the bytes, not the name.",
   },
   {
-    icon: "flowArrowDuo",
+    icon: "slidersDuo",
     term: "It plans the whole chain",
     detail: "Convert, resize, clean and compress in the right order, with a reason for each step.",
   },

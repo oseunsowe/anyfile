@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
 import { EASE } from "@/components/motion/Reveal";
 import { parseIntent } from "@/lib/intent";
+import { CLOUD_AI_ENABLED } from "@/lib/featureFlags";
 import { describeRequirement, isEmptyRequirement } from "@/lib/requirement";
 import { useFilePipeline } from "@/lib/useFilePipeline";
 import { cn } from "@/lib/cn";
@@ -23,6 +24,7 @@ export function SmartFixConsole({ className }: { className?: string }) {
   const [outcome, setOutcome] = useState("");
 
   const parsed = useMemo(() => parseIntent(outcome), [outcome]);
+  const removeBackgroundRequested = parsed.actions.includes("remove-background");
   const pipeline = useFilePipeline({
     requirement: parsed.requirement,
     actions: parsed.actions,
@@ -31,6 +33,11 @@ export function SmartFixConsole({ className }: { className?: string }) {
   const summary = isEmptyRequirement(parsed.requirement)
     ? null
     : describeRequirement(parsed.requirement);
+
+  const emptyPlanMessage =
+    removeBackgroundRequested && !CLOUD_AI_ENABLED
+      ? "Background removal is not enabled in this build yet. Try resize, convert, compress, or metadata cleanup for now."
+      : "Tell us the outcome above and we will build the plan — for example “under 2 MB as a JPG”.";
 
   return (
     <Card data-testid="smartfix-console" className={cn("p-5 shadow-lg sm:p-6", className)}>
@@ -97,7 +104,7 @@ export function SmartFixConsole({ className }: { className?: string }) {
       <div className="mt-5">
         <TaskSurface
           pipeline={pipeline}
-          emptyPlanMessage="Tell us the outcome above and we will build the plan — for example “under 2 MB as a JPG”."
+          emptyPlanMessage={emptyPlanMessage}
         />
       </div>
     </Card>

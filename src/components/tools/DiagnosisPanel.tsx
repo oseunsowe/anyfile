@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
-import { Badge, PrivacyBadge } from "@/components/ui/Badge";
+import { PrivacyBadge } from "@/components/ui/Badge";
 import { formatBytes } from "@/lib/format";
 import { kindLabel, type FileAnalysis } from "@/lib/analyze";
-import { getTool } from "@/lib/tools";
+import { getTool, type ProcessingMode } from "@/lib/tools";
 import { cn } from "@/lib/cn";
 
 /**
@@ -13,9 +13,12 @@ import { cn } from "@/lib/cn";
  */
 export function DiagnosisPanel({
   analysis,
+  /** §1.3 — must reflect whether the *actual* plan touches the cloud. */
+  mode = "device",
   className,
 }: {
   analysis: FileAnalysis;
+  mode?: ProcessingMode;
   className?: string;
 }) {
   const facts: { label: string; value: string }[] = [
@@ -41,7 +44,7 @@ export function DiagnosisPanel({
           <h3 className="truncate text-[0.9375rem] font-semibold text-ink">
             {analysis.name}
           </h3>
-          <PrivacyBadge mode="device" />
+          <PrivacyBadge mode={mode} />
         </div>
         <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
           {facts.map((fact) => (
@@ -91,18 +94,14 @@ export function DiagnosisPanel({
                     <p className="mt-0.5 text-[0.8125rem] leading-relaxed text-ink-muted">
                       {finding.detail}
                     </p>
-                    {fixTool ? (
+                    {fixTool?.status === "live" ? (
                       <p className="mt-1.5">
-                        {fixTool.status === "live" ? (
-                          <Link
-                            href={`/${fixTool.slug}`}
-                            className="text-[0.8125rem] font-medium text-brand underline-offset-2 hover:underline"
-                          >
-                            Fix with {fixTool.name} →
-                          </Link>
-                        ) : (
-                          <Badge tone="neutral">{fixTool.name} — coming soon</Badge>
-                        )}
+                        <Link
+                          href={`/${fixTool.slug}`}
+                          className="text-[0.8125rem] font-medium text-brand underline-offset-2 hover:underline"
+                        >
+                          Fix with {fixTool.name} →
+                        </Link>
                       </p>
                     ) : null}
                   </div>

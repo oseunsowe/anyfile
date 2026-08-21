@@ -6,7 +6,16 @@
 import { OperationError } from "@/lib/ops/errors";
 import { decodeHeic, HEIC_ENABLED, looksLikeHeic } from "@/lib/ops/heic";
 import { CancelledError, SCALE_LADDER, searchQuality } from "@/lib/ops/quality";
-import { scaleBy, targetSize, type ResizeSpec, type Size } from "@/lib/ops/resize";
+import {
+  cropRectFor,
+  rotatedSize,
+  scaleBy,
+  targetSize,
+  type CropAspect,
+  type ResizeSpec,
+  type RotateDegrees,
+  type Size,
+} from "@/lib/ops/resize";
 
 export { OperationError };
 
@@ -109,6 +118,143 @@ export async function resizeImage(
 
   const blob = await encodeImage(bitmap, mime, 0.92, size);
   return { blob, size };
+}
+
+/** Rotates the whole canvas clockwise — 90/270 swap width and height. */
+export async function rotateImage(
+  bitmap: ImageBitmap,
+  degrees: RotateDegrees,
+  mime: string,
+): Promise<Blob> {
+  const size = rotatedSize({ width: bitmap.width, height: bitmap.height }, degrees);
+  const canvas = new OffscreenCanvas(size.width, size.height);
+  const context = canvas.getContext("2d");
+  if (!context) throw new OperationError("Could not prepare the image for encoding.");
+
+  if (mime === "image/jpeg") {
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, size.width, size.height);
+  }
+
+  context.translate(size.width / 2, size.height / 2);
+  context.rotate((degrees * Math.PI) / 180);
+  context.drawImage(bitmap, -bitmap.width / 2, -bitmap.height / 2);
+
+  const blob = await canvas.convertToBlob({
+    type: mime,
+    ...(isLossless(mime) ? {} : { quality: 0.92 }),
+  });
+  if (blob.type !== mime) {
+    throw new OperationError(
+      `This browser cannot save ${mime.replace("image/", "").toUpperCase()} files.`,
+    );
+  }
+
+  return blob;
+}
+
+/**
+ * Crops to the largest centred rectangle of the given shape — trims the
+ * excess dimension rather than stretching or padding (§ never claim a crop
+ * when the pixels were actually distorted to fit).
+ */
+export async function cropImage(
+  bitmap: ImageBitmap,
+  aspect: CropAspect,
+  mime: string,
+): Promise<Blob> {
+  const rect = cropRectFor({ width: bitmap.width, height: bitmap.height }, aspect);
+  const canvas = new OffscreenCanvas(rect.width, rect.height);
+  const context = canvas.getContext("2d");
+  if (!context) throw new OperationError("Could not prepare the image for encoding.");
+
+  if (mime === "image/jpeg") {
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, rect.width, rect.height);
+  }
+
+  context.drawImage(
+    bitmap,
+    rect.x,
+    rect.y,
+    rect.width,
+    rect.height,
+    0,
+    0,
+    rect.width,
+    rect.height,
+  );
+
+  const blob = await canvas.convertToBlob({
+    type: mime,
+    ...(isLossless(mime) ? {} : { quality: 0.92 }),
+  });
+  if (blob.type !== mime) {
+    throw new OperationError(
+      `This browser cannot save ${mime.replace("image/", "").toUpperCase()} files.`,
+    );
+  }
+
+  return blob;
+}
+
+/**
+ * Stamps repeating, semi-transparent text diagonally across the image.
+ *
+ * Tiled rather than a single centred mark, so cropping out one copy still
+ * leaves others — the point of a watermark is to survive casual reuse.
+ */
+export async function addWatermark(
+  bitmap: ImageBitmap,
+  text: string,
+  mime: string,
+): Promise<Blob> {
+  const { width, height } = bitmap;
+  const canvas = new OffscreenCanvas(width, height);
+  const context = canvas.getContext("2d");
+  if (!context) throw new OperationError("Could not prepare the image for encoding.");
+
+  if (mime === "image/jpeg") {
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, width, height);
+  }
+  context.drawImage(bitmap, 0, 0);
+
+  // Font size scales with the image so the mark reads at any resolution.
+  const fontSize = Math.max(16, Math.round(Math.min(width, height) / 18));
+  context.font = `600 ${fontSize}px sans-serif`;
+  context.fillStyle = "rgba(255, 255, 255, 0.45)";
+  context.strokeStyle = "rgba(0, 0, 0, 0.25)";
+  context.lineWidth = Math.max(1, Math.round(fontSize / 16));
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+
+  const textWidth = context.measureText(text).width;
+  const cellSize = Math.max(textWidth, fontSize) * 1.8;
+  const diagonal = Math.hypot(width, height);
+
+  context.save();
+  context.translate(width / 2, height / 2);
+  context.rotate(-Math.PI / 6);
+  for (let y = -diagonal; y < diagonal; y += cellSize) {
+    for (let x = -diagonal; x < diagonal; x += cellSize) {
+      context.strokeText(text, x, y);
+      context.fillText(text, x, y);
+    }
+  }
+  context.restore();
+
+  const blob = await canvas.convertToBlob({
+    type: mime,
+    ...(isLossless(mime) ? {} : { quality: 0.92 }),
+  });
+  if (blob.type !== mime) {
+    throw new OperationError(
+      `This browser cannot save ${mime.replace("image/", "").toUpperCase()} files.`,
+    );
+  }
+
+  return blob;
 }
 
 export type CompressResult = {

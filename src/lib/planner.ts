@@ -15,6 +15,7 @@ import type { ActionHint } from "@/lib/intent";
 import type { Requirement, TargetFormat } from "@/lib/requirement";
 import { FORMAT_LABELS } from "@/lib/requirement";
 import { formatBytes } from "@/lib/format";
+import { CLOUD_AI_ENABLED } from "@/lib/featureFlags";
 import type { ProcessingMode } from "@/lib/tools";
 
 export type PlanStep = {
@@ -79,7 +80,29 @@ export function buildPlan({ analysis, requirement, actions = [] }: PlanInput): P
     });
   }
 
-  if (actions.includes("remove-background")) {
+  if (requirement.rotate) {
+    steps.push({
+      id: "rotate",
+      title: `Rotate ${requirement.rotate}°`,
+      reason: "Straightens the photo before anything else runs.",
+      tool: "crop-image",
+      processing: "device",
+      optional: false,
+    });
+  }
+
+  if (requirement.cropAspect) {
+    steps.push({
+      id: "crop",
+      title: `Crop to ${requirement.cropAspect}`,
+      reason: "Trims to the shape you chose, centred on the photo — nothing is stretched.",
+      tool: "crop-image",
+      processing: "device",
+      optional: false,
+    });
+  }
+
+  if (CLOUD_AI_ENABLED && actions.includes("remove-background")) {
     steps.push({
       id: "remove-background",
       title: "Remove the background",
@@ -93,6 +116,17 @@ export function buildPlan({ analysis, requirement, actions = [] }: PlanInput): P
 
   const resizeStep = planResize(analysis, requirement);
   if (resizeStep) steps.push(resizeStep);
+
+  if (requirement.watermarkText) {
+    steps.push({
+      id: "watermark",
+      title: "Add watermark",
+      reason: "Stamped after resizing, so it survives at the final size.",
+      tool: "watermark-image",
+      processing: "device",
+      optional: false,
+    });
+  }
 
   const wantsStrip = requirement.stripMetadata || analysis?.hasGpsMetadata === true;
   if (wantsStrip) {
@@ -156,7 +190,7 @@ function planResize(
     (minWidth !== undefined && analysis?.width !== null && (analysis?.width ?? 0) < minWidth) ||
     (minHeight !== undefined && analysis?.height !== null && (analysis?.height ?? 0) < minHeight);
 
-  if (tooSmall) {
+  if (tooSmall && CLOUD_AI_ENABLED) {
     return {
       id: "upscale",
       title: "Upscale to meet the minimum size",

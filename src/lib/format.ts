@@ -18,9 +18,23 @@ export function formatBytes(bytes: number, fractionDigits = 1): string {
   return `${value.toFixed(digits)} ${UNITS[exponent]}`;
 }
 
-/** "7.8 MB → 1.9 MB (76% smaller)" for the success screen (§4.5). */
+/**
+ * "7.8 MB → 1.9 MB (76% smaller)" for the success screen (§4.5).
+ *
+ * Most tools shrink the file, but some (background removal's transparent
+ * PNG, format conversions) legitimately grow it — say so instead of
+ * reporting a negative "% smaller", which reads as broken.
+ */
 export function formatReduction(before: number, after: number): string {
   if (before <= 0) return formatBytes(after);
+
+  if (after === before) return `${formatBytes(before)} → ${formatBytes(after)} (no change)`;
+
+  if (after > before) {
+    const percent = Math.round((after / before - 1) * 100);
+    return `${formatBytes(before)} → ${formatBytes(after)} (${percent}% larger)`;
+  }
+
   const percent = Math.round((1 - after / before) * 100);
   return `${formatBytes(before)} → ${formatBytes(after)} (${percent}% smaller)`;
 }

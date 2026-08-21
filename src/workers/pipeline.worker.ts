@@ -14,10 +14,13 @@
  */
 
 import {
+  addWatermark,
   compressToTarget,
+  cropImage,
   decodeImage,
   encodeImage,
   resizeImage,
+  rotateImage,
 } from "@/lib/ops/image";
 import { OperationError } from "@/lib/ops/errors";
 import { imagesToPdf, mergePdfs, organizePdf, stripPdfMetadata } from "@/lib/ops/pdf";
@@ -43,6 +46,9 @@ function post(message: WorkerResponse) {
 const STEP_LABELS: Record<ExecStep["id"], string> = {
   convert: "Converting",
   resize: "Resizing",
+  rotate: "Rotating",
+  crop: "Cropping",
+  watermark: "Adding watermark",
   "strip-metadata": "Removing metadata",
   compress: "Compressing",
   "merge-pdf": "Merging",
@@ -154,7 +160,11 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         }
 
         case "organize-pdf": {
-          current = await organizePdf(current, { keep: step.keep, rotate: step.rotate });
+          current = await organizePdf(current, {
+            keep: step.keep,
+            rotate: step.rotate,
+            rotateAll: step.rotateAll,
+          });
           reEncoded = true;
           break;
         }
@@ -197,6 +207,44 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           mime = targetMime;
           filename = renameTo(filename, step.format);
           reEncoded = true;
+          break;
+        }
+
+        case "rotate":
+        case "crop": {
+          if (mime === PDF_MIME) {
+            throw new OperationError(
+              "PDF pages cannot be rotated or cropped this way — use Organize PDF.",
+            );
+          }
+
+          const bitmap = await decodeImage(current);
+          try {
+            current =
+              step.id === "rotate"
+                ? await rotateImage(bitmap, step.degrees, mime)
+                : await cropImage(bitmap, step.aspect, mime);
+            reEncoded = true;
+          } finally {
+            bitmap.close();
+          }
+          break;
+        }
+
+        case "watermark": {
+          if (mime === PDF_MIME) {
+            throw new OperationError(
+              "Watermarking a PDF isn't available yet — watermark the image before converting it to PDF.",
+            );
+          }
+
+          const bitmap = await decodeImage(current);
+          try {
+            current = await addWatermark(bitmap, step.text, mime);
+            reEncoded = true;
+          } finally {
+            bitmap.close();
+          }
           break;
         }
 

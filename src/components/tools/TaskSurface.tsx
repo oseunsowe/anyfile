@@ -1,8 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { FileDrop } from "@/components/tools/FileDrop";
+import { FileQueue } from "@/components/tools/FileQueue";
 import { DiagnosisPanel } from "@/components/tools/DiagnosisPanel";
 import { PlanPreview } from "@/components/tools/PlanPreview";
 import { ProofPanel } from "@/components/tools/ProofPanel";
@@ -10,7 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { Icon, Spinner } from "@/components/ui/Icon";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { EASE } from "@/components/motion/Reveal";
-import { MAX_INPUT_BYTES, type useFilePipeline } from "@/lib/useFilePipeline";
+import type { useFilePipeline } from "@/lib/useFilePipeline";
 
 type Pipeline = ReturnType<typeof useFilePipeline>;
 
@@ -30,6 +32,8 @@ export function TaskSurface({
   dropHint = "or paste from your clipboard · nothing is uploaded",
   accept,
   runLabel = "Run this plan",
+  /** Combining tools (merge, image-to-pdf) take an ordered queue rather than one file. */
+  multiple = false,
   emptyPlanMessage,
   children,
 }: {
@@ -38,6 +42,7 @@ export function TaskSurface({
   dropHint?: string;
   accept?: string;
   runLabel?: string;
+  multiple?: boolean;
   /** Shown when a file is loaded but no work is required. */
   emptyPlanMessage?: ReactNode;
   /** Extra controls rendered above the plan, e.g. a target-size field. */
@@ -46,7 +51,8 @@ export function TaskSurface({
   const reduced = useReducedMotion();
   const {
     analysis, blockers, canRun, cancel, checks, disabledSteps, downloadUrl,
-    error, handleFiles, phase, plan, progress, reset, result, run, toggleStep,
+    error, files, handleFiles, maxInputBytes, moveFile, phase, plan, progress,
+    removeFile, reset, result, run, toggleStep,
   } = pipeline;
 
   const transition = reduced
@@ -67,7 +73,8 @@ export function TaskSurface({
           <FileDrop
             onFiles={handleFiles}
             accept={accept}
-            maxBytes={MAX_INPUT_BYTES}
+            multiple={multiple}
+            maxBytes={maxInputBytes}
             title={dropTitle}
             hint={dropHint}
           />
@@ -116,7 +123,31 @@ export function TaskSurface({
 
       {phase === "ready" && analysis ? (
         <motion.div key="ready" {...fade} className="space-y-6">
-          <DiagnosisPanel analysis={analysis} />
+          {multiple ? (
+            <FileQueue files={files} onRemove={removeFile} onMove={moveFile} />
+          ) : (
+            <DiagnosisPanel
+              analysis={analysis}
+              mode={
+                plan.some(
+                  (step) => !disabledSteps.has(step.id) && step.processing === "cloud",
+                )
+                  ? "cloud"
+                  : "device"
+              }
+            />
+          )}
+
+          {multiple ? (
+            <FileDrop
+              onFiles={handleFiles}
+              accept={accept}
+              multiple
+              maxBytes={maxInputBytes}
+              title="Add another file"
+              hint="or paste from your clipboard"
+            />
+          ) : null}
 
           {children}
 
@@ -135,6 +166,17 @@ export function TaskSurface({
                   <Icon name="warning" className="mt-0.5 size-4 text-warning" />
                   <span>
                     <span className="font-medium">{blocker.title}</span> — {blocker.reason}
+                    {blocker.cta ? (
+                      <>
+                        {" "}
+                        <Link
+                          href={blocker.cta.href}
+                          className="font-medium text-brand underline-offset-2 hover:underline"
+                        >
+                          {blocker.cta.label} →
+                        </Link>
+                      </>
+                    ) : null}
                   </span>
                 </li>
               ))}

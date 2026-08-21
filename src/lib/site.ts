@@ -30,6 +30,8 @@ export type NavItem = {
  */
 export const primaryNav: readonly NavItem[] = [
   { label: "Tools", href: "/tools" },
+  { label: "Plans", href: "/plans" },
+  { label: "Demo", href: "/demo" },
   { label: "AI Studio", href: "/tools#ai" },
   { label: "Workflows", href: "/tools#smart" },
 ] as const;
@@ -50,7 +52,14 @@ export const footerNav: readonly { title: string; items: readonly NavItem[] }[] 
   },
   {
     title: "Product",
-    items: [{ label: "All tools", href: "/tools" }],
+    items: [
+      { label: "All tools", href: "/tools" },
+      { label: "Plans", href: "/plans" },
+      { label: "Roadmap", href: "/roadmap" },
+      { label: "Demo login", href: "/login" },
+      { label: "Privacy", href: "/privacy" },
+      { label: "Terms", href: "/terms" },
+    ],
   },
 ] as const;
 

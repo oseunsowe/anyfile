@@ -5,12 +5,15 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { Icon } from "@/components/ui/Icon";
 import { Logo } from "@/components/brand/Logo";
-import { ButtonLink } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
+import type { Entitlements } from "@/lib/entitlements";
+import { getPlan } from "@/lib/plans";
 import { primaryNav } from "@/lib/site";
 
-export function SiteHeader() {
+export function SiteHeader({ entitlements }: { entitlements: Entitlements }) {
   const [open, setOpen] = useState(false);
+  const planName = getPlan(entitlements.plan).name;
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-canvas/85 backdrop-blur-md">
@@ -30,13 +33,31 @@ export function SiteHeader() {
             ))}
           </nav>
 
-          {/* Log in / Get Started sit here in the reference. They arrive with
-              accounts (todo.md P1); until then the CTA points at the thing that
-              actually works without an account. */}
           <div className="hidden items-center gap-2 lg:flex">
-            <ButtonLink href="/#outcome" variant="solid" size="sm" className="rounded-full px-4">
-              Start free
-            </ButtonLink>
+            {entitlements.loggedIn ? (
+              <>
+                <span className="rounded-full border border-line px-3 py-1.5 text-[0.8125rem] font-medium text-ink-muted">
+                  {planName} plan
+                </span>
+                <ButtonLink href="/demo" variant="outline" size="sm" className="rounded-full px-4">
+                  Demo workspace
+                </ButtonLink>
+                <form action="/api/auth/logout" method="post">
+                  <Button type="submit" variant="ghost" size="sm" className="rounded-full px-4">
+                    Sign out
+                  </Button>
+                </form>
+              </>
+            ) : (
+              <>
+                <ButtonLink href="/login" variant="ghost" size="sm" className="rounded-full px-4">
+                  Demo login
+                </ButtonLink>
+                <ButtonLink href="/#outcome" variant="solid" size="sm" className="rounded-full px-4">
+                  Start free
+                </ButtonLink>
+              </>
+            )}
           </div>
 
           <button
@@ -76,14 +97,45 @@ export function SiteHeader() {
               ))}
             </nav>
             <div className="mt-3 flex flex-col gap-2 border-t border-line pt-4">
-              <ButtonLink
-                href="/#outcome"
-                variant="solid"
-                size="md"
-                onClick={() => setOpen(false)}
-              >
-                Start free
-              </ButtonLink>
+              {entitlements.loggedIn ? (
+                <>
+                  <span className="px-2 text-[0.8125rem] font-medium text-ink-muted">
+                    {planName} plan
+                  </span>
+                  <ButtonLink
+                    href="/demo"
+                    variant="outline"
+                    size="md"
+                    onClick={() => setOpen(false)}
+                  >
+                    Demo workspace
+                  </ButtonLink>
+                  <form action="/api/auth/logout" method="post">
+                    <Button type="submit" variant="ghost" size="md" className="w-full">
+                      Sign out
+                    </Button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <ButtonLink
+                    href="/login"
+                    variant="ghost"
+                    size="md"
+                    onClick={() => setOpen(false)}
+                  >
+                    Demo login
+                  </ButtonLink>
+                  <ButtonLink
+                    href="/#outcome"
+                    variant="solid"
+                    size="md"
+                    onClick={() => setOpen(false)}
+                  >
+                    Start free
+                  </ButtonLink>
+                </>
+              )}
             </div>
           </Container>
         </motion.div>

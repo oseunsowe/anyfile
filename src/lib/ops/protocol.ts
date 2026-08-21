@@ -7,6 +7,7 @@
  */
 
 import type { TargetFormat } from "@/lib/requirement";
+import type { CropAspect, RotateDegrees } from "@/lib/ops/resize";
 
 export type ExecStep =
   | { id: "convert"; format: TargetFormat }
@@ -17,17 +18,47 @@ export type ExecStep =
       exactWidth?: number;
       exactHeight?: number;
     }
+  | { id: "rotate"; degrees: RotateDegrees }
+  | { id: "crop"; aspect: CropAspect }
+  | { id: "watermark"; text: string }
   | { id: "strip-metadata" }
   | { id: "compress"; maxBytes: number }
   // Combining steps consume every input file and produce one. They are only
   // valid as the first step — see `isCombiner` below.
   | { id: "merge-pdf" }
   | { id: "images-to-pdf" }
-  | { id: "organize-pdf"; keep?: number[]; rotate?: Record<number, number> };
+  | {
+      id: "organize-pdf";
+      keep?: number[];
+      rotate?: Record<number, number>;
+      /** Applied to every kept page — a whole-document rotate needs no page-index map. */
+      rotateAll?: number;
+    };
 
 export type ExecStepId = ExecStep["id"];
 
 const COMBINERS = new Set<ExecStepId>(["merge-pdf", "images-to-pdf"]);
+
+/**
+ * A step supplied by the tool page rather than derived from the Requirement.
+ * Merging several PDFs, or applying a page-by-page reorder/rotate/delete, is
+ * not expressible as "what the destination accepts", so those tools declare
+ * the operation directly.
+ */
+export type LeadOperation = {
+  id: "merge-pdf" | "images-to-pdf" | "organize-pdf";
+  title: string;
+  reason: string;
+  tool: string;
+  /** Below this many queued files, running would be pointless (e.g. a merge of one). */
+  minFiles?: number;
+  /** organize-pdf only — zero-based original page indices to keep, in output order. */
+  keep?: number[];
+  /** organize-pdf only — clockwise degrees added, keyed by original page index. */
+  rotate?: Record<number, number>;
+  /** organize-pdf only — clockwise degrees added to every kept page. */
+  rotateAll?: number;
+};
 
 /**
  * True for steps that fold many inputs into one.

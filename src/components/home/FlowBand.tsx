@@ -27,9 +27,9 @@ const INPUTS: Node[] = [
 
 const OUTPUTS: Node[] = [
   { label: "Job portal", icon: "sealCheckDuo", tone: "text-cat-pdf bg-cat-pdf-soft" },
-  { label: "Email", icon: "flowArrowDuo", tone: "text-cat-ai bg-cat-ai-soft" },
-  { label: "Marketplace", icon: "lightningDuo", tone: "text-cat-smart bg-cat-smart-soft" },
-  { label: "Web & print", icon: "cropDuo", tone: "text-cat-image bg-cat-image-soft" },
+  { label: "Email", icon: "envelopeDuo", tone: "text-cat-ai bg-cat-ai-soft" },
+  { label: "Marketplace", icon: "storefrontDuo", tone: "text-cat-smart bg-cat-smart-soft" },
+  { label: "Web & print", icon: "browserDuo", tone: "text-cat-image bg-cat-image-soft" },
 ];
 
 /** Cubic connectors from each column into the centre, in a 100×60 viewBox. */

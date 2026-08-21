@@ -3,7 +3,7 @@ import { Container, SectionHeading } from "@/components/ui/Container";
 import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
 import { ToolCard } from "@/components/tools/ToolCard";
 import { pageMetadata } from "@/lib/seo";
-import { families, getToolsByFamily } from "@/lib/tools";
+import { families, getLiveToolsByFamily } from "@/lib/tools";
 
 export const metadata: Metadata = pageMetadata({
   title: "All tools",
@@ -37,7 +37,7 @@ export default function ToolsPage() {
       </section>
 
       {families.map((family) => {
-        const familyTools = getToolsByFamily(family.id);
+        const familyTools = getLiveToolsByFamily(family.id);
         if (familyTools.length === 0) return null;
 
         return (

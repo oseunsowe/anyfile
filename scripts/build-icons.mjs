@@ -26,6 +26,7 @@ const ICONS = {
   caretUp: "caret-up",
   caretDown: "caret-down",
   plus: "plus",
+  rotate: "arrow-clockwise",
   arrowRight: "arrow-right",
   download: "download-simple",
   restart: "arrow-counter-clockwise",
@@ -56,6 +57,9 @@ const ICONS = {
   uploadDuo: "upload-simple-duotone",
   cropDuo: "crop-duotone",
   slidersDuo: "sliders-horizontal-duotone",
+  envelopeDuo: "envelope-simple-duotone",
+  storefrontDuo: "storefront-duotone",
+  browserDuo: "browser-duotone",
 };
 
 const setPath = require.resolve("@iconify-json/ph/icons.json");

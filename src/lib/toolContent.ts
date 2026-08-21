@@ -10,8 +10,23 @@
  * swapped in is exactly the thin doorway page the guardrail exists to prevent.
  */
 
+import type { ActionHint } from "@/lib/intent";
 import type { FaqEntry } from "@/lib/seo";
 import type { Requirement } from "@/lib/requirement";
+import type { LeadOperation } from "@/lib/useFilePipeline";
+
+/**
+ * One destination in a "target job" tool — plan.md's "offer destination
+ * presets before raw dimensions". The requirement is ours, not the
+ * platform's fine print, so `note` must read as a recommendation and never
+ * as a quoted spec (§ "never claim an unverified platform fact").
+ */
+export type DestinationOption = {
+  id: string;
+  label: string;
+  requirement: Requirement;
+  note: string;
+};
 
 /**
  * What the page asks the user before it can act (§5: "expose only settings
@@ -33,7 +48,22 @@ export type ToolPreset =
       hint: string;
       defaultWidth: number;
       defaultHeight: number;
-    };
+    }
+  | {
+      kind: "destination";
+      label: string;
+      hint: string;
+      options: readonly DestinationOption[];
+    }
+  | { kind: "transform" }
+  /** Per-page PDF editing — mode controls which controls are shown. */
+  | { kind: "pages"; mode: "organize" | "split" | "extract" | "delete" }
+  /** Whole-document rotate — every page turned by the same amount, no page list needed. */
+  | { kind: "pdf-rotate" }
+  /** A single text field, stamped across the image once non-empty. */
+  | { kind: "watermark"; label: string; hint: string; placeholder: string }
+  /** Natural-language outcome instead of a preset value — the homepage console, on its own page. */
+  | { kind: "smartfix" };
 
 export type ToolContent = {
   h1: string;
@@ -44,10 +74,16 @@ export type ToolContent = {
   preset: ToolPreset;
   /** `accept` attribute for the file input. */
   accept: string;
+  /** Present only for tools that combine several files into one, e.g. merge. */
+  lead?: LeadOperation;
+  /** Fixed action hints the page always wants, e.g. remove-background. */
+  actions?: readonly ActionHint[];
   faqs: FaqEntry[];
 };
 
 const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp";
+const PDF_ACCEPT = "application/pdf,.pdf";
+const ALL_ACCEPT = `${PDF_ACCEPT},${IMAGE_ACCEPT},image/heic,image/heif,.heic,.heif`;
 
 export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
@@ -251,6 +287,162 @@ export const toolContent: Record<string, ToolContent> = {
   },
 
   // -------------------------------------------------------------------------
+  "profile-picture-resizer": {
+    h1: "Resize a profile picture",
+    metaTitle: "Profile Picture Resizer — LinkedIn, Instagram, X, WhatsApp and more",
+    metaDescription:
+      "Pick the platform your photo is going to and get a square profile picture sized and formatted for it, in your browser.",
+    intro:
+      "Every platform crops a profile photo to a circle or square and expects a minimum size to stay sharp — but hunting down the exact pixel spec is exactly the kind of chore this tool exists to skip. Pick your destination below and we resize to a square at the right size for it, then convert to JPG. The sizes are our own sensible defaults for each platform rather than a quoted spec, so they are generous enough to look sharp even if a platform's exact number has changed.",
+    preset: {
+      kind: "destination",
+      label: "Where is this photo going?",
+      hint: "Pick a platform to size the photo for it.",
+      options: [
+        {
+          id: "linkedin",
+          label: "LinkedIn",
+          requirement: { exactWidth: 400, exactHeight: 400, format: "jpg", stripMetadata: true },
+          note: "400×400 — sharp at LinkedIn's display size and its larger banner-page view.",
+        },
+        {
+          id: "instagram",
+          label: "Instagram",
+          requirement: { exactWidth: 320, exactHeight: 320, format: "jpg", stripMetadata: true },
+          note: "320×320 — Instagram displays it small, but this stays crisp when tapped to view full-size.",
+        },
+        {
+          id: "facebook",
+          label: "Facebook",
+          requirement: { exactWidth: 320, exactHeight: 320, format: "jpg", stripMetadata: true },
+          note: "320×320 — comfortably above Facebook's own display size on any device.",
+        },
+        {
+          id: "x",
+          label: "X (Twitter)",
+          requirement: { exactWidth: 400, exactHeight: 400, format: "jpg", stripMetadata: true },
+          note: "400×400 — X's own recommended profile photo size.",
+        },
+        {
+          id: "whatsapp",
+          label: "WhatsApp",
+          requirement: { exactWidth: 500, exactHeight: 500, format: "jpg", stripMetadata: true },
+          note: "500×500 — sharp in chat headers and the full-screen profile view.",
+        },
+        {
+          id: "youtube",
+          label: "YouTube",
+          requirement: { exactWidth: 800, exactHeight: 800, format: "jpg", stripMetadata: true },
+          note: "800×800 — Google's own guidance for a channel picture.",
+        },
+        {
+          id: "discord",
+          label: "Discord",
+          requirement: { exactWidth: 512, exactHeight: 512, format: "jpg", stripMetadata: true },
+          note: "512×512 — matches the size Discord itself recommends uploading at.",
+        },
+        {
+          id: "github",
+          label: "GitHub",
+          requirement: { exactWidth: 500, exactHeight: 500, format: "jpg", stripMetadata: true },
+          note: "500×500 — sharp as a GitHub avatar at any size it is shown.",
+        },
+      ],
+    },
+    accept: IMAGE_ACCEPT,
+    faqs: [
+      {
+        question: "Will my photo be cropped to a square?",
+        answer:
+          "No — we resize to exactly the square size chosen, which stretches a non-square photo rather than cropping it. For a good result, start from a photo that's already close to square, or crop it to the part you want kept first. A dedicated crop tool is on the way for this.",
+      },
+      {
+        question: "Are these the platform's official required sizes?",
+        answer:
+          "They're our own recommended defaults, chosen to be sharp at how each platform actually displays a profile photo — not a copy of a page we're claiming is current. Platforms change these numbers without much notice, so if a specific pixel size is stated in your account settings, use that instead.",
+      },
+      {
+        question: "Why JPG for every platform?",
+        answer:
+          "It's accepted everywhere in the list above and keeps the file small. None of these platforms need transparency in a profile photo, so there's no reason to keep a larger PNG.",
+      },
+      {
+        question: "Does this remove metadata from the photo too?",
+        answer:
+          "Yes. A profile photo is public by definition, so we strip location and device data as part of the resize — nothing extra to remember.",
+      },
+    ],
+  },
+
+  // -------------------------------------------------------------------------
+  "crop-image": {
+    h1: "Crop and rotate an image",
+    metaTitle: "Crop and rotate an image online",
+    metaDescription:
+      "Rotate a sideways photo and crop it to a square, portrait or widescreen shape, entirely in your browser.",
+    intro:
+      "Rotate fixes a photo that came in sideways or upside down. Cropping trims it to a shape — square for a profile photo, 16:9 for a video thumbnail, 9:16 for a story — by keeping the largest centred rectangle of that shape and discarding the rest. Nothing is stretched: the crop always removes the extra edge rather than distorting the picture to fit.",
+    preset: { kind: "transform" },
+    accept: IMAGE_ACCEPT,
+    faqs: [
+      {
+        question: "Can I choose exactly what part of the photo gets kept?",
+        answer:
+          "Not yet — the crop is always centred on the photo. If the part you need isn't in the middle, crop closer to it first in your phone or photo app, then use this tool for the final shape.",
+      },
+      {
+        question: "Will cropping distort my photo?",
+        answer:
+          "No. Cropping only trims — it never stretches or squashes pixels. If you need an exact width and height instead of a shape, our resize tool does stretch to fit, and says so.",
+      },
+      {
+        question: "Can I rotate and crop at the same time?",
+        answer:
+          "Yes. Rotation runs first, then the crop is applied to the rotated image, so a photo taken sideways still crops to the right shape.",
+      },
+      {
+        question: "Does this work on PDFs?",
+        answer:
+          "No, this tool is for photos and images. To rotate or reorder pages inside a PDF, use Organize PDF instead.",
+      },
+    ],
+  },
+
+  // -------------------------------------------------------------------------
+  "watermark-image": {
+    h1: "Add a watermark to an image",
+    metaTitle: "Add a text watermark to a photo",
+    metaDescription:
+      "Stamp a repeating text watermark across a photo before you share it online — runs entirely in your browser.",
+    intro:
+      "A photo posted without a mark is easy for anyone to lift and reuse as their own. Type the text you want stamped across the image \u2014 your name, a business name, or a website \u2014 and we tile it diagonally across the photo so cropping out one copy still leaves others visible.",
+    preset: {
+      kind: "watermark",
+      label: "Watermark text",
+      hint: "Shown repeated and semi-transparent across the photo.",
+      placeholder: "\u00a9 Your name",
+    },
+    accept: IMAGE_ACCEPT,
+    faqs: [
+      {
+        question: "Can I control where the watermark goes?",
+        answer:
+          "Not yet \u2014 it tiles diagonally across the whole photo at a size that scales with the image, which is deliberately hard to crop out in one cut.",
+      },
+      {
+        question: "Will the watermark survive someone cropping the photo?",
+        answer:
+          "Usually at least one copy will, since the text repeats across the full image rather than sitting once in a corner. No watermark is uncroppable, but a repeating one is far harder to remove cleanly.",
+      },
+      {
+        question: "Does this work on transparent PNGs?",
+        answer:
+          "Yes \u2014 the watermark draws over the existing pixels, transparent areas included, and the file stays a PNG.",
+      },
+    ],
+  },
+
+  // -------------------------------------------------------------------------
   "jpg-to-png": {
     h1: "Convert JPG to PNG",
     metaTitle: "Convert JPG to PNG",
@@ -370,7 +562,366 @@ export const toolContent: Record<string, ToolContent> = {
       },
     ],
   },
-};
+
+  // -------------------------------------------------------------------------
+  "remove-background": {
+    h1: "Remove the background from an image",
+    metaTitle: "Remove image background — cut out the subject",
+    metaDescription:
+      "Cut a subject out of a photo and export it on a transparent background. Cloud-processed, paid feature.",
+    intro:
+      "This cuts a subject out of a photo and gives you back a PNG with a transparent background — for product shots, headshots or anything you need to drop onto a different background. The photo is sent to a cloud provider to do the cutout, so it is not processed on your device like the rest of this site, and it is a paid feature: sign in on a Daily, Weekly, Pro or Business plan to run it.",
+    preset: { kind: "fixed", requirement: {} },
+    actions: ["remove-background"],
+    accept: IMAGE_ACCEPT,
+    faqs: [
+      {
+        question: "Why does this cost money when the other tools are free?",
+        answer:
+          "Every other tool on this site runs in your browser, so a file never leaves your device and there is no per-file cost to us. Background removal uses a cloud AI provider that charges per image, so it is gated to paid plans rather than funded by ads.",
+      },
+      {
+        question: "What file types can I use?",
+        answer: "JPG, PNG and WebP, up to 12 MB. HEIC is not supported by the background-removal provider yet.",
+      },
+      {
+        question: "Is the photo stored anywhere?",
+        answer:
+          "It is sent to the background-removal provider to process the request and is not stored by this site afterwards. See the provider's own retention policy for how long they keep it on their side.",
+      },
+      {
+        question: "Can I choose the background color instead of transparent?",
+        answer: "Not yet — today this always returns a transparent PNG cutout.",
+      },
+    ],
+  },
+
+  // -------------------------------------------------------------------------
+  "merge-pdf": {
+    h1: "Merge PDF files",
+    metaTitle: "Merge PDF files into one document",
+    metaDescription:
+      "Combine two or more PDFs into a single file, in the order you choose. Runs entirely in your browser.",
+    intro:
+      "Application packets, scanned forms and multi-part reports usually need to arrive as one file, not five attachments. Drop your PDFs here, put them in the order the pages should appear, and we build a single combined document from them — nothing leaves your browser to do it.",
+    preset: { kind: "fixed", requirement: {} },
+    accept: PDF_ACCEPT,
+    lead: {
+      id: "merge-pdf",
+      title: "Merge into one PDF",
+      reason: "Combines every file above into a single document, in this order.",
+      tool: "merge-pdf",
+      minFiles: 2,
+    },
+    faqs: [
+      {
+        question: "Can I change the order after adding the files?",
+        answer:
+          "Yes. Each file in the list has buttons to move it earlier or later — the numbered order is exactly the page order in the finished PDF.",
+      },
+      {
+        question: "Is there a limit to how many PDFs I can merge?",
+        answer:
+          "Practically, no — the limit is your browser's memory and a combined document capped at 5,000 pages, which is far beyond any normal use case.",
+      },
+      {
+        question: "What happens to each file's metadata?",
+        answer:
+          "The merged PDF gets fresh document properties; the page content itself is untouched. If you need author or software details removed too, run it through our metadata remover afterward.",
+      },
+      {
+        question: "Will this work on a password-protected PDF?",
+        answer:
+          "No — an encrypted file cannot be read without its password. Remove the password in the application that created it, then merge.",
+      },
+    ],
+  },
+
+  // -------------------------------------------------------------------------
+  "image-to-pdf": {
+    h1: "Convert images to PDF",
+    metaTitle: "Combine images into a single PDF",
+    metaDescription:
+      "Turn one or more photos or scans into a single ordered PDF, entirely in your browser.",
+    intro:
+      "A form that asks for 'one PDF' will not accept five separate JPGs, which is the most common reason a photo submission or scanned application gets rejected. Drop your images here in the order they should appear and we build one PDF with each image as its own page, sized to fit.",
+    preset: { kind: "fixed", requirement: {} },
+    accept: IMAGE_ACCEPT,
+    lead: {
+      id: "images-to-pdf",
+      title: "Combine into one PDF",
+      reason: "Each image becomes its own page, in this order.",
+      tool: "image-to-pdf",
+    },
+    faqs: [
+      {
+        question: "Can I mix JPG, PNG and other formats in one PDF?",
+        answer:
+          "Yes. Every image is placed on its own page regardless of its original format, and the page order matches your list.",
+      },
+      {
+        question: "Will the pages be cropped or stretched?",
+        answer:
+          "No. Each page is sized to match its image exactly, so nothing is cropped, stretched or letterboxed.",
+      },
+      {
+        question: "Can I convert a HEIC photo straight to a PDF page?",
+        answer:
+          "Yes — HEIC is decoded like any other image before being placed on the page, so iPhone photos work without a separate conversion step first.",
+      },
+      {
+        question: "Does this remove the photos' location data?",
+        answer:
+          "Yes. Building the PDF re-encodes each image from its pixels, which drops EXIF and GPS data along the way.",
+      },
+    ],
+  },
+
+  // -------------------------------------------------------------------------
+  "pdf-remove-metadata": {
+    h1: "Remove PDF metadata",
+    metaTitle: "Remove author, software and metadata from a PDF",
+    metaDescription:
+      "Clear the author, software and revision history hidden inside a PDF's document properties, in your browser.",
+    intro:
+      "Every PDF carries document properties alongside the pages you see — often the author's real name, the software and version that created it, and sometimes a modification history. Word and Google Docs both write this in by default. Drop a PDF here and we clear it before you send it anywhere the details shouldn't travel.",
+    preset: { kind: "fixed", requirement: { stripMetadata: true } },
+    accept: PDF_ACCEPT,
+    faqs: [
+      {
+        question: "What exactly gets removed?",
+        answer:
+          "The document's Info dictionary — title, author, subject, keywords, producer and creator — plus any XMP metadata packet attached to the file. The pages and their content are untouched.",
+      },
+      {
+        question: "Does this remove metadata from images inside the PDF?",
+        answer:
+          "No — this clears the document's own properties, not metadata embedded in individual images on the page. That is a separate concern for the images themselves before they were placed in the PDF.",
+      },
+      {
+        question: "Will the PDF still look and print the same?",
+        answer:
+          "Yes. Nothing about the visible pages changes — only the hidden document properties are cleared.",
+      },
+      {
+        question: "Does this work on a password-protected PDF?",
+        answer:
+          "No. An encrypted file needs its password removed first, in the application that created it, before we can read or rewrite it.",
+      },
+    ],
+  },
+
+  // -------------------------------------------------------------------------
+  "split-pdf": {
+    h1: "Split a PDF",
+    metaTitle: "Split a PDF by removing pages you do not need",
+    metaDescription:
+      "Pick the pages to keep and save them as a new, smaller PDF. Runs in your browser.",
+    intro:
+      "When a form only needs part of a document, sending the full file just adds friction. This tool starts from your current PDF and lets you remove the pages you do not need, then saves the selected pages as a fresh PDF you can submit.",
+    preset: { kind: "pages", mode: "split" },
+    accept: PDF_ACCEPT,
+    lead: {
+      id: "organize-pdf",
+      title: "Save split PDF",
+      reason: "Keeps the pages left in the list and removes the rest.",
+      tool: "split-pdf",
+    },
+    faqs: [
+      {
+        question: "Does this create many files or one file?",
+        answer:
+          "This release saves one output PDF containing the pages you kept. Multi-output splitting is on the roadmap.",
+      },
+      {
+        question: "Can I change the page order while splitting?",
+        answer:
+          "For reordering, use Organize PDF. Split PDF is focused on selecting which pages stay.",
+      },
+      {
+        question: "Will page quality change?",
+        answer:
+          "No. Pages are copied as-is; we only change which pages are present in the final file.",
+      },
+    ],
+  },
+
+  // -------------------------------------------------------------------------
+  "extract-pdf": {
+    h1: "Extract pages from a PDF",
+    metaTitle: "Extract selected pages from a PDF",
+    metaDescription:
+      "Keep only the pages you want and save them as a new PDF, without uploading your file.",
+    intro:
+      "Use this when you need just a few pages from a longer PDF. Remove every page you do not need, then save what remains as its own document.",
+    preset: { kind: "pages", mode: "extract" },
+    accept: PDF_ACCEPT,
+    lead: {
+      id: "organize-pdf",
+      title: "Save extracted pages",
+      reason: "Builds a new PDF from the pages left in the list.",
+      tool: "extract-pdf",
+    },
+    faqs: [
+      {
+        question: "How is this different from Split PDF?",
+        answer:
+          "Both keep selected pages in one output file. Extract is phrased for the common \"I only need pages X and Y\" workflow.",
+      },
+      {
+        question: "Can I extract pages from a protected PDF?",
+        answer:
+          "Not directly. Remove the password first, then extract pages here.",
+      },
+      {
+        question: "Will metadata be removed too?",
+        answer:
+          "No. This tool changes pages only. Use Remove PDF metadata if you also need privacy cleanup.",
+      },
+    ],
+  },
+
+  // -------------------------------------------------------------------------
+  "delete-pdf-pages": {
+    h1: "Delete pages from a PDF",
+    metaTitle: "Delete pages from a PDF online",
+    metaDescription:
+      "Remove unwanted pages from a PDF and save the cleaned version in your browser.",
+    intro:
+      "Draft pages, duplicate scans, and cover sheets are common reasons a PDF gets rejected or looks unprofessional. Remove the pages you do not want and save a cleaner final document.",
+    preset: { kind: "pages", mode: "delete" },
+    accept: PDF_ACCEPT,
+    lead: {
+      id: "organize-pdf",
+      title: "Save cleaned PDF",
+      reason: "Applies your removed-page list and keeps the rest.",
+      tool: "delete-pdf-pages",
+    },
+    faqs: [
+      {
+        question: "Can I undo if I remove the wrong page?",
+        answer:
+          "Yes. Use the restore control if the list becomes empty, or start over and re-select pages.",
+      },
+      {
+        question: "Will this compress the file too?",
+        answer:
+          "Sometimes a little, because fewer pages remain, but it is not a compression tool.",
+      },
+      {
+        question: "Does deleting pages affect readability or print quality?",
+        answer:
+          "No. Remaining pages are copied without visual changes.",
+      },
+    ],
+  },
+
+  // -------------------------------------------------------------------------
+  "organize-pdf": {
+    h1: "Organize PDF pages",
+    metaTitle: "Reorder, rotate and delete PDF pages",
+    metaDescription:
+      "Put pages in the right order, rotate the ones that came in sideways, and drop the ones you don't need — all in your browser.",
+    intro:
+      "Scans rarely come out in the right order, and a page fed in sideways stays sideways until someone fixes it. Drop a PDF here and every page appears in a numbered list: move pages up or down, rotate individual pages a quarter turn at a time, and remove any you don't want in the final document.",
+    preset: { kind: "pages", mode: "organize" },
+    accept: PDF_ACCEPT,
+    lead: {
+      id: "organize-pdf",
+      title: "Save page changes",
+      reason: "Applies the order, rotation and removed pages set above.",
+      tool: "organize-pdf",
+    },
+    faqs: [
+      {
+        question: "Can I split one PDF into several files here?",
+        answer:
+          "This tool saves one organized PDF. For focused page selection flows, use Split PDF or Extract PDF pages.",
+      },
+      {
+        question: "What happens if I remove every page?",
+        answer:
+          "We stop you rather than hand back an empty file — you'll see a plain error instead of a broken download.",
+      },
+      {
+        question: "Does rotating a page lose any quality?",
+        answer:
+          "No. Rotation just changes the page's orientation flag; the content itself is untouched, unlike rotating a photo which has to redraw every pixel.",
+      },
+      {
+        question: "Will this work on a password-protected PDF?",
+        answer:
+          "No. Remove the password in the application that created it first, then reorder or rotate its pages here.",
+      },
+    ],
+  },
+  // -------------------------------------------------------------------------
+  "rotate-pdf": {
+    h1: "Rotate a PDF",
+    metaTitle: "Rotate every page of a PDF",
+    metaDescription:
+      "Turn a sideways or upside-down PDF the right way up — every page, one rotation, in your browser.",
+    intro:
+      "A PDF scanned on its side stays that way in every viewer until someone rotates it. Pick a direction and we turn every page in the document by the same amount — for anything more selective, like rotating just one page, use Organize PDF instead.",
+    preset: { kind: "pdf-rotate" },
+    accept: PDF_ACCEPT,
+    lead: {
+      id: "organize-pdf",
+      title: "Rotate every page",
+      reason: "Turns the whole document by the angle chosen above.",
+      tool: "rotate-pdf",
+    },
+    faqs: [
+      {
+        question: "Can I rotate just one page instead of the whole document?",
+        answer:
+          "Use Organize PDF for that \u2014 it rotates pages individually. This tool turns every page by the same amount in one step.",
+      },
+      {
+        question: "Does rotating lose any quality?",
+        answer:
+          "No. Rotation changes each page's orientation flag; the content itself is never redrawn or re-encoded.",
+      },
+      {
+        question: "Will this work on a password-protected PDF?",
+        answer:
+          "No. Remove the password in the application that created it first, then rotate it here.",
+      },
+    ],
+  },
+  // -------------------------------------------------------------------------
+  smartfix: {
+    h1: "SmartFix — describe the result you need",
+    metaTitle: "SmartFix — tell us the outcome, we build the plan",
+    metaDescription:
+      "Describe what you need in plain English — under 2 MB, resized, metadata removed — and SmartFix builds and runs the exact steps, in your browser.",
+    intro:
+      "Every tool on this site does one thing well, but most real requests are really two or three things at once: convert, then resize, then strip the location data. SmartFix reads a plain-English sentence, works out which of those apply and in what order, and shows you the plan before anything runs. If it can't confidently read your sentence, it says so instead of guessing.",
+    preset: { kind: "smartfix" },
+    accept: ALL_ACCEPT,
+    faqs: [
+      {
+        question: "What can I actually type here?",
+        answer:
+          "Plain descriptions of the result you need: \u201cunder 2 MB as a JPG\u201d, \u201cremove the location from this photo\u201d, \u201cresize to 1280x720\u201d, \u201cmake this small enough to email\u201d. We read it deterministically \u2014 matching known patterns for size, dimensions, format and a handful of destinations \u2014 rather than sending your sentence anywhere.",
+      },
+      {
+        question: "What happens if SmartFix doesn't understand my sentence?",
+        answer:
+          "You'll see the examples above instead of a made-up plan. Rephrasing with a size, dimension or format usually gets it, or you can go straight to the specific tool for your file from the tools page.",
+      },
+      {
+        question: "Is this different from the SmartFix console on the homepage?",
+        answer:
+          "No \u2014 it's the exact same engine on its own page, so you can link or bookmark it directly.",
+      },
+      {
+        question: "Does SmartFix send my file anywhere?",
+        answer:
+          "Every step SmartFix can currently plan runs on your device. If a request ever needed cloud processing, it would be labelled before it ran \u2014 never assumed.",
+      },
+    ],
+  },};
 
 export function getToolContent(slug: string): ToolContent | undefined {
   return toolContent[slug];

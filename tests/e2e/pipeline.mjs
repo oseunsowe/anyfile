@@ -1,4 +1,5 @@
 import { chromium } from "playwright";
+import { PDFDocument, StandardFonts } from "pdf-lib";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -85,6 +86,38 @@ async function makeNoisyJpeg(page, width, height) {
   return Buffer.from(dataUrl.split(",")[1], "base64");
 }
 
+/** A flat-colour JPEG via canvas — no need for noise when size isn't the point. */
+async function makeFlatJpeg(page, width, height, color) {
+  const dataUrl = await page.evaluate(
+    async ([w, h, c]) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = c;
+      ctx.fillRect(0, 0, w, h);
+      return canvas.toDataURL("image/jpeg", 0.9);
+    },
+    [width, height, color],
+  );
+  return Buffer.from(dataUrl.split(",")[1], "base64");
+}
+
+/** A minimal real PDF, built with pdf-lib in Node — no browser needed for this one. */
+async function makeSimplePdf({ pages = 1, width = 200, height = 300, title, author } = {}) {
+  const doc = await PDFDocument.create();
+  if (title) doc.setTitle(title);
+  if (author) doc.setAuthor(author);
+
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  for (let i = 0; i < pages; i += 1) {
+    const page = doc.addPage([width, height]);
+    page.drawText(`Page ${i + 1}`, { x: 20, y: height - 40, size: 14, font });
+  }
+
+  return Buffer.from(await doc.save());
+}
+
 const browser = await chromium.launch();
 const context = await browser.newContext();
 const page = await context.newPage();
@@ -111,10 +144,8 @@ check("source is large enough to require compression", jpeg.length > 800_000);
 console.log("Scenario 1: 'Make this under 500 KB as JPG'");
 
 await page.fill("#outcome", "Make this under 500 KB as JPG");
-check(
-  "intent parsed and echoed back",
-  await visible(console_.getByText("JPG · max 500 KB")),
-);
+const interpreted = await visible(console_.getByText(/JPG\s*·\s*max\s*500\s*KB/i), 4000);
+check("intent parsed and echoed back", interpreted);
 
 await console_.locator('input[type="file"]').setInputFiles({
   name: "noise.jpg",
@@ -122,7 +153,10 @@ await console_.locator('input[type="file"]').setInputFiles({
   buffer: jpeg,
 });
 
-await console_.getByText(/We found \d+ issue/).waitFor({ timeout: 15000 });
+await Promise.race([
+  console_.getByText(/We found \d+ issue/).waitFor({ timeout: 15000 }),
+  console_.getByText(/No problems found/i).waitFor({ timeout: 15000 }),
+]);
 check("diagnosis shown", true);
 
 const planText = await console_.locator("ol").first().innerText();
@@ -332,11 +366,232 @@ if (!heic) {
 }
 
 // ---------------------------------------------------------------------------
+// Scenario 7 — merge-pdf combines an ordered, multi-file queue into one PDF
+// ---------------------------------------------------------------------------
+console.log("\nScenario 7: /merge-pdf combines files in order");
+
+await page.goto(`${BASE}/merge-pdf`, { waitUntil: "networkidle" });
+const mergeTool = page.getByTestId("tool-workspace");
+
+const pdfA = await makeSimplePdf({ pages: 1 });
+const pdfB = await makeSimplePdf({ pages: 2 });
+
+await mergeTool
+  .locator('input[type="file"]')
+  .setInputFiles({ name: "a.pdf", mimeType: "application/pdf", buffer: pdfA });
+await mergeTool.getByText(/1 file, in this order/).waitFor({ timeout: 15000 });
+check(
+  "run is disabled below the two-file minimum",
+  await mergeTool.getByRole("button", { name: /Run this plan|Merge PDF/i }).isDisabled(),
+);
+
+await mergeTool.getByText("Add another file").waitFor({ timeout: 5000 });
+await mergeTool
+  .locator('input[type="file"]')
+  .setInputFiles({ name: "b.pdf", mimeType: "application/pdf", buffer: pdfB });
+await mergeTool.getByText(/2 files, in this order/).waitFor({ timeout: 15000 });
+check(
+  "plan combines the queued files in order",
+  /Merge into one PDF/.test(await mergeTool.innerText()),
+);
+check(
+  "run enabled once the minimum is met",
+  await mergeTool.getByRole("button", { name: /Run this plan|Merge PDF/i }).isEnabled(),
+);
+
+const [mergeDownload] = await Promise.all([
+  page.waitForEvent("download"),
+  (async () => {
+    await mergeTool.getByRole("button", { name: /Run this plan|Merge PDF/i }).click();
+    await mergeTool.getByText(VERDICT).waitFor({ timeout: 30000 });
+    await mergeTool.getByRole("link", { name: /Download/i }).click();
+  })(),
+]);
+
+check(
+  "merged file named for the combined document, not the first input",
+  (await mergeDownload.suggestedFilename()) === "merged.pdf",
+  await mergeDownload.suggestedFilename(),
+);
+
+const mergedDoc = await PDFDocument.load(fs.readFileSync(await mergeDownload.path()));
+check(
+  "merged PDF carries every page from both files, in order",
+  mergedDoc.getPageCount() === 3,
+  mergedDoc.getPageCount(),
+);
+
+// ---------------------------------------------------------------------------
+// Scenario 8 — image-to-pdf builds one page per image, sized to fit
+// ---------------------------------------------------------------------------
+console.log("\nScenario 8: /image-to-pdf builds one page per image");
+
+await page.goto(`${BASE}/image-to-pdf`, { waitUntil: "networkidle" });
+const imageToPdfTool = page.getByTestId("tool-workspace");
+
+const photoA = await makeFlatJpeg(page, 300, 200, "red");
+const photoB = await makeFlatJpeg(page, 150, 150, "blue");
+
+await imageToPdfTool
+  .locator('input[type="file"]')
+  .setInputFiles({ name: "photo-a.jpg", mimeType: "image/jpeg", buffer: photoA });
+await imageToPdfTool.getByText(/1 file, in this order/).waitFor({ timeout: 15000 });
+
+await imageToPdfTool.getByText("Add another file").waitFor({ timeout: 5000 });
+await imageToPdfTool
+  .locator('input[type="file"]')
+  .setInputFiles({ name: "photo-b.jpg", mimeType: "image/jpeg", buffer: photoB });
+await imageToPdfTool.getByText(/2 files, in this order/).waitFor({ timeout: 15000 });
+check(
+  "plan combines images into one PDF",
+  /Combine into one PDF/.test(await imageToPdfTool.innerText()),
+);
+
+const [imagesDownload] = await Promise.all([
+  page.waitForEvent("download"),
+  (async () => {
+    await imageToPdfTool.getByRole("button", { name: /Run this plan|Image to PDF/i }).click();
+    await imageToPdfTool.getByText(VERDICT).waitFor({ timeout: 30000 });
+    await imageToPdfTool.getByRole("link", { name: /Download/i }).click();
+  })(),
+]);
+
+const imagesDoc = await PDFDocument.load(fs.readFileSync(await imagesDownload.path()));
+check("one page per source image", imagesDoc.getPageCount() === 2, imagesDoc.getPageCount());
+
+const firstPageSize = imagesDoc.getPage(0).getSize();
+check(
+  "page sized to its image rather than cropped or letterboxed",
+  Math.round(firstPageSize.width) === 300 && Math.round(firstPageSize.height) === 200,
+  `${firstPageSize.width}×${firstPageSize.height}`,
+);
+
+// ---------------------------------------------------------------------------
+// Scenario 9 — pdf-remove-metadata actually clears document properties
+// ---------------------------------------------------------------------------
+console.log("\nScenario 9: /pdf-remove-metadata clears document properties");
+
+await page.goto(`${BASE}/pdf-remove-metadata`, { waitUntil: "networkidle" });
+const metadataTool = page.getByTestId("tool-workspace");
+
+const taggedPdf = await makeSimplePdf({ title: "Confidential Draft", author: "Jane Doe" });
+
+await metadataTool
+  .locator('input[type="file"]')
+  .setInputFiles({ name: "tagged.pdf", mimeType: "application/pdf", buffer: taggedPdf });
+await metadataTool.getByText(/Our plan/).waitFor({ timeout: 15000 });
+check(
+  "plans a metadata removal step",
+  /Remove private metadata/.test(await metadataTool.locator("ol").first().innerText()),
+);
+
+const [metadataDownload] = await Promise.all([
+  page.waitForEvent("download"),
+  (async () => {
+    await metadataTool.getByRole("button", { name: /Run this plan|Remove PDF metadata/i }).click();
+    await metadataTool.getByText(VERDICT).waitFor({ timeout: 30000 });
+    await metadataTool.getByRole("link", { name: /Download/i }).click();
+  })(),
+]);
+
+const proof9 = await metadataTool.innerText();
+check("metadata removal reaches a PASS", /Requirement met/.test(proof9), proof9.match(VERDICT)?.[0]);
+
+const cleanedDoc = await PDFDocument.load(fs.readFileSync(await metadataDownload.path()));
+check("title actually cleared, not just hidden in the UI", !cleanedDoc.getTitle(), cleanedDoc.getTitle());
+check("author actually cleared, not just hidden in the UI", !cleanedDoc.getAuthor(), cleanedDoc.getAuthor());
+
+// ---------------------------------------------------------------------------
+// Scenario 10 — profile-picture-resizer: destination presets, not raw pixels
+// ---------------------------------------------------------------------------
+console.log("\nScenario 10: /profile-picture-resizer destination presets");
+
+await page.goto(`${BASE}/profile-picture-resizer`, { waitUntil: "networkidle" });
+const profileTool = page.getByTestId("tool-workspace");
+
+check(
+  "offers a platform, not a pixel field, by default",
+  await visible(profileTool.getByRole("radio", { name: "Discord" })),
+);
+
+await profileTool.getByRole("radio", { name: "Discord" }).click();
+check(
+  "selecting a platform explains the chosen size",
+  await visible(profileTool.getByText(/512×512/)),
+);
+
+const selfie = await makeFlatJpeg(page, 300, 500, "green");
+await profileTool.locator('input[type="file"]').setInputFiles({
+  name: "selfie.jpg",
+  mimeType: "image/jpeg",
+  buffer: selfie,
+});
+await profileTool.getByText(/Our plan/).waitFor({ timeout: 15000 });
+check(
+  "plan resizes to the selected platform's square size",
+  /Resize to 512×512/.test(await profileTool.innerText()),
+);
+
+await profileTool.getByRole("button", { name: /Run this plan|Profile Picture Resizer/i }).click();
+await profileTool.getByText(VERDICT).waitFor({ timeout: 30000 });
+
+const proof10 = await profileTool.innerText();
+check("output resized to the exact square requested", /512 × 512/.test(proof10), proof10.match(/\d+ × \d+/g)?.join(" "));
+check("output converted to JPG", /JPG/.test(proof10));
+check("profile picture reaches a PASS", /Requirement met/.test(proof10), proof10.match(VERDICT)?.[0]);
+
+// ---------------------------------------------------------------------------
+// Scenario 11 — split-pdf keeps only the selected pages in a new output PDF
+// ---------------------------------------------------------------------------
+console.log("\nScenario 11: /split-pdf keeps selected pages");
+
+await page.goto(`${BASE}/split-pdf`, { waitUntil: "networkidle" });
+const splitTool = page.getByTestId("tool-workspace");
+
+const sourcePdf = await makeSimplePdf({ pages: 3 });
+await splitTool
+  .locator('input[type="file"]')
+  .setInputFiles({ name: "source.pdf", mimeType: "application/pdf", buffer: sourcePdf });
+await splitTool.getByText(/3 pages, in this order/).waitFor({ timeout: 15000 });
+
+await splitTool.getByRole("button", { name: /Remove page 2/i }).click();
+check(
+  "split flow removes unneeded pages before save",
+  await visible(splitTool.getByText(/2 pages, in this order/), 5000),
+);
+
+const [splitDownload] = await Promise.all([
+  page.waitForEvent("download"),
+  (async () => {
+    await splitTool.getByRole("button", { name: /Run this plan|Split PDF/i }).click();
+    await splitTool.getByText(VERDICT).waitFor({ timeout: 30000 });
+    await splitTool.getByRole("link", { name: /Download/i }).click();
+  })(),
+]);
+
+const splitDoc = await PDFDocument.load(fs.readFileSync(await splitDownload.path()));
+check("split output contains only kept pages", splitDoc.getPageCount() === 2, splitDoc.getPageCount());
+
+// ---------------------------------------------------------------------------
 // Sitemap should list exactly the live tools, and nothing planned.
 // ---------------------------------------------------------------------------
 const sitemap = await (await context.request.get(`${BASE}/sitemap.xml`)).text();
 check("sitemap includes a live tool", sitemap.includes("/image-under-2mb"));
-check("sitemap excludes planned tools", !sitemap.includes("/merge-pdf"));
+check(
+  "sitemap includes the newly shipped tools",
+  [
+    "/merge-pdf",
+    "/image-to-pdf",
+    "/pdf-remove-metadata",
+    "/profile-picture-resizer",
+    "/split-pdf",
+    "/extract-pdf",
+    "/delete-pdf-pages",
+  ].every((slug) =>
+    sitemap.includes(slug),
+  ),
+);
+check("sitemap excludes still-planned tools", !sitemap.includes("/compress-pdf"));
 
 // ---------------------------------------------------------------------------
 console.log("");

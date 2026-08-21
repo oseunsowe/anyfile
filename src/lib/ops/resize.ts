@@ -47,3 +47,44 @@ export function scaleBy(current: Size, factor: number): Size {
     height: Math.max(1, Math.round(current.height * factor)),
   };
 }
+
+export type RotateDegrees = 90 | 180 | 270;
+
+/** Canvas size after a rotation — 90/270 swap the axes, 180 does not. */
+export function rotatedSize(size: Size, degrees: RotateDegrees): Size {
+  return degrees === 180 ? size : { width: size.height, height: size.width };
+}
+
+export type CropAspect = "1:1" | "4:3" | "3:4" | "16:9" | "9:16";
+
+const ASPECT_RATIOS: Record<CropAspect, number> = {
+  "1:1": 1,
+  "4:3": 4 / 3,
+  "3:4": 3 / 4,
+  "16:9": 16 / 9,
+  "9:16": 9 / 16,
+};
+
+export type CropRect = { x: number; y: number; width: number; height: number };
+
+/**
+ * A centred crop rectangle for the given target shape.
+ *
+ * Always the largest rectangle of that aspect that fits inside the source —
+ * cropping trims the excess dimension rather than padding, so no pixels are
+ * invented and nothing is stretched.
+ */
+export function cropRectFor(source: Size, aspect: CropAspect): CropRect {
+  const ratio = ASPECT_RATIOS[aspect];
+  const sourceRatio = source.width / source.height;
+
+  const width = sourceRatio > ratio ? Math.round(source.height * ratio) : source.width;
+  const height = sourceRatio > ratio ? source.height : Math.round(source.width / ratio);
+
+  return {
+    width,
+    height,
+    x: Math.floor((source.width - width) / 2),
+    y: Math.floor((source.height - height) / 2),
+  };
+}

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { analyzeFile, type FileAnalysis } from "@/lib/analyze";
 import type { ActionHint } from "@/lib/intent";
 import { buildPlan } from "@/lib/planner";
+import { kindToFormat } from "@/lib/planner";
 import { getCapabilities, supportsStep, toExecSteps } from "@/lib/ops/capabilities";
 import {
   PipelineCancelled,
@@ -11,12 +12,16 @@ import {
   type PipelineProgress,
   type PipelineResult,
 } from "@/lib/ops/client";
+import { removeBackgroundInCloud } from "@/lib/cloud/client";
+import { useEntitlements } from "@/lib/entitlements";
+import { CLOUD_AI_ENABLED } from "@/lib/featureFlags";
+import { getPlan, isPaidPlan } from "@/lib/plans";
 import { evaluateRequirement, type Requirement } from "@/lib/requirement";
+import type { LeadOperation } from "@/lib/ops/protocol";
+
+export type { LeadOperation };
 
 export type PipelinePhase = "idle" | "analyzing" | "ready" | "running" | "done" | "error";
-
-/** §13 — a hard client-side ceiling before we even read the file. */
-export const MAX_INPUT_BYTES = 100_000_000;
 
 /** Capabilities never change, so nothing ever notifies this subscriber. */
 const neverChanges = () => () => {};
@@ -28,18 +33,6 @@ const neverChanges = () => () => {};
  * cannot drift: a tool page is just this loop with the requirement supplied by
  * the page instead of parsed from a sentence.
  */
-/**
- * A step supplied by the tool page rather than derived from the Requirement.
- * Merging several PDFs is not expressible as "what the destination accepts",
- * so those tools declare the operation directly.
- */
-export type LeadOperation = {
-  id: "merge-pdf" | "images-to-pdf";
-  title: string;
-  reason: string;
-  tool: string;
-};
-
 export function useFilePipeline({
   requirement,
   actions = [],
@@ -57,6 +50,10 @@ export function useFilePipeline({
   const [progress, setProgress] = useState<PipelineProgress | null>(null);
   const [result, setResult] = useState<PipelineResult | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+
+  const entitlements = useEntitlements();
+  /** §13 — a hard client-side ceiling before we even read the file, raised by plan. */
+  const maxInputBytes = getPlan(entitlements.plan).maxInputBytes;
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -107,13 +104,22 @@ export function useFilePipeline({
     if (!analysis || !capabilities) return [];
     return plan
       .filter((step) => !disabledSteps.has(step.id))
-      .map((step) => ({ step, support: supportsStep(step, analysis.kind, capabilities) }))
+      .map((step) => ({
+        step,
+        support: supportsStep(step, analysis.kind, capabilities, entitlements),
+      }))
       .flatMap(({ step, support }) =>
-        support.ok ? [] : [{ id: step.id, title: step.title, reason: support.reason }],
+        support.ok
+          ? []
+          : [{ id: step.id, title: step.title, reason: support.reason, cta: support.cta }],
       );
-  }, [analysis, capabilities, plan, disabledSteps]);
+  }, [analysis, capabilities, plan, disabledSteps, entitlements]);
 
-  const canRun = plan.length > 0 && blockers.length === 0 && phase === "ready";
+  const canRun =
+    plan.length > 0 &&
+    blockers.length === 0 &&
+    phase === "ready" &&
+    (lead?.minFiles === undefined || files.length >= lead.minFiles);
 
   /** Appends rather than replaces, so a second drop adds to a merge queue. */
   const handleFiles = useCallback(async (incoming: File[]) => {
@@ -161,21 +167,81 @@ export function useFilePipeline({
   const run = useCallback(async () => {
     if (files.length === 0 || !analysis) return;
 
-    const steps = toExecSteps(plan, requirement, disabledSteps);
-    if (steps.length === 0) return;
+    const activePlan = plan.filter((step) => !disabledSteps.has(step.id));
+    const wantsCloudBackground =
+      CLOUD_AI_ENABLED &&
+      entitlements.loggedIn &&
+      isPaidPlan(entitlements.plan) &&
+      activePlan.some((step) => step.id === "remove-background");
+    const localSteps = toExecSteps(plan, requirement, disabledSteps, lead);
+
+    if (!wantsCloudBackground && localSteps.length === 0) return;
 
     const controller = new AbortController();
     abortRef.current = controller;
+    const totalStepCount = localSteps.length + (wantsCloudBackground ? 1 : 0);
 
     setPhase("running");
     setError(null);
-    setProgress({ percent: 0, label: "Starting", stepIndex: 0, stepCount: steps.length });
+    setProgress({
+      percent: 0,
+      label: "Starting",
+      stepIndex: 0,
+      stepCount: Math.max(totalStepCount, 1),
+    });
 
     try {
-      const output = await runPipeline(files, steps, {
-        signal: controller.signal,
-        onProgress: setProgress,
-      });
+      let inputFiles = files;
+
+      if (wantsCloudBackground) {
+        setProgress({
+          percent: localSteps.length === 0 ? 20 : 10,
+          label: "Removing background",
+          stepIndex: 0,
+          stepCount: totalStepCount,
+        });
+
+        const cutout = await removeBackgroundInCloud(files[0], {
+          signal: controller.signal,
+        });
+
+        inputFiles = [cutout, ...files.slice(1)];
+      }
+
+      let output: PipelineResult;
+
+      if (localSteps.length === 0) {
+        const cloudFile = inputFiles[0];
+        const cloudAnalysis = await analyzeFile(cloudFile);
+        output = {
+          blob: cloudFile,
+          filename: cloudFile.name,
+          format: kindToFormat(cloudAnalysis.kind) ?? "png",
+          width: cloudAnalysis.width,
+          height: cloudAnalysis.height,
+          metadataStripped: false,
+        };
+      } else {
+        output = await runPipeline(inputFiles, localSteps, {
+          signal: controller.signal,
+          onProgress: (next) => {
+            if (!wantsCloudBackground) {
+              setProgress(next);
+              return;
+            }
+
+            const localShare = (next.percent / 100) * localSteps.length;
+            const percent = ((1 + localShare) / totalStepCount) * 100;
+            setProgress({
+              percent,
+              label: next.label,
+              stepIndex: next.stepIndex + 1,
+              stepCount: totalStepCount,
+            });
+          },
+        });
+      }
+
       setResult(output);
       setDownloadUrl(URL.createObjectURL(output.blob));
       setPhase("done");
@@ -191,7 +257,7 @@ export function useFilePipeline({
     } finally {
       abortRef.current = null;
     }
-  }, [analysis, disabledSteps, files, plan, requirement]);
+  }, [analysis, disabledSteps, entitlements, files, lead, plan, requirement]);
 
   const cancel = useCallback(() => abortRef.current?.abort(), []);
 
@@ -239,6 +305,7 @@ export function useFilePipeline({
     error,
     files,
     handleFiles,
+    maxInputBytes,
     moveFile,
     phase,
     plan,

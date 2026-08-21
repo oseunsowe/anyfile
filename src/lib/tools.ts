@@ -3,8 +3,8 @@
  * SEO landing pages, internal linking and sitemap generation (plan.md §3, §8).
  *
  * `status` is deliberate: nothing is marked `live` until its operation actually
- * runs. Planned tools render as "Coming soon" and are excluded from the sitemap,
- * which keeps us on the right side of the §8.3 thin-page guardrail.
+ * runs. Planned tools are excluded from the sitemap, which keeps us on the
+ * right side of the §8.3 thin-page guardrail.
  */
 
 export type ToolFamily = "pdf" | "image" | "ai" | "smart";
@@ -175,7 +175,19 @@ export const tools: readonly Tool[] = [
     status: "live",
     mvp: true,
     accepts: ["jpg", "jpeg", "png", "webp", "heic"],
-    related: ["compress-image", "crop-image", "image-to-pdf"],
+    related: ["profile-picture-resizer", "compress-image", "crop-image"],
+  },
+  {
+    slug: "profile-picture-resizer",
+    name: "Profile Picture Resizer",
+    family: "image",
+    summary: "Pick a platform — LinkedIn, Instagram, X, WhatsApp and more — and resize to fit.",
+    processing: "device",
+    tier: "free",
+    status: "live",
+    mvp: true,
+    accepts: ["jpg", "jpeg", "png", "webp", "heic"],
+    related: ["resize-image", "compress-image", "remove-location-from-photo"],
   },
   {
     slug: "crop-image",
@@ -184,10 +196,22 @@ export const tools: readonly Tool[] = [
     summary: "Crop, straighten and rotate images without quality loss.",
     processing: "device",
     tier: "free",
-    status: "planned",
+    status: "live",
     mvp: true,
     accepts: ["jpg", "jpeg", "png", "webp"],
-    related: ["resize-image", "compress-image", "image-to-pdf"],
+    related: ["resize-image", "compress-image", "watermark-image"],
+  },
+  {
+    slug: "watermark-image",
+    name: "Add watermark",
+    family: "image",
+    summary: "Stamp repeating text across a photo before sharing it.",
+    processing: "device",
+    tier: "free",
+    status: "live",
+    mvp: true,
+    accepts: ["jpg", "jpeg", "png", "webp"],
+    related: ["crop-image", "resize-image", "compress-image"],
   },
   {
     slug: "remove-location-from-photo",
@@ -220,7 +244,7 @@ export const tools: readonly Tool[] = [
     summary: "Combine photos and scans into a single ordered PDF.",
     processing: "device",
     tier: "free",
-    status: "planned",
+    status: "live",
     mvp: true,
     accepts: ["jpg", "jpeg", "png", "webp", "heic"],
     related: ["pdf-to-jpg", "merge-pdf", "compress-pdf"],
@@ -234,7 +258,7 @@ export const tools: readonly Tool[] = [
     summary: "Drag pages into order and combine files into one PDF.",
     processing: "device",
     tier: "free",
-    status: "planned",
+    status: "live",
     mvp: true,
     accepts: ["pdf"],
     related: ["split-pdf", "organize-pdf", "compress-pdf"],
@@ -243,25 +267,61 @@ export const tools: readonly Tool[] = [
     slug: "split-pdf",
     name: "Split PDF",
     family: "pdf",
-    summary: "Pick pages visually and split a PDF into separate files.",
+    summary: "Split out selected pages into a new PDF file.",
     processing: "device",
     tier: "free",
-    status: "planned",
+    status: "live",
     mvp: true,
     accepts: ["pdf"],
-    related: ["merge-pdf", "organize-pdf", "pdf-to-jpg"],
+    related: ["extract-pdf", "delete-pdf-pages", "organize-pdf"],
+  },
+  {
+    slug: "extract-pdf",
+    name: "Extract PDF pages",
+    family: "pdf",
+    summary: "Keep only the pages you want and save them as a new PDF.",
+    processing: "device",
+    tier: "free",
+    status: "live",
+    mvp: true,
+    accepts: ["pdf"],
+    related: ["split-pdf", "delete-pdf-pages", "organize-pdf"],
+  },
+  {
+    slug: "delete-pdf-pages",
+    name: "Delete PDF pages",
+    family: "pdf",
+    summary: "Remove unwanted pages from a PDF and keep the rest.",
+    processing: "device",
+    tier: "free",
+    status: "live",
+    mvp: true,
+    accepts: ["pdf"],
+    related: ["organize-pdf", "split-pdf", "extract-pdf"],
   },
   {
     slug: "organize-pdf",
     name: "Organize PDF",
     family: "pdf",
-    summary: "Reorder, rotate, extract and delete pages on a page grid.",
+    summary: "Reorder, rotate and delete pages in a numbered list.",
     processing: "device",
     tier: "free",
-    status: "planned",
+    status: "live",
     mvp: true,
     accepts: ["pdf"],
-    related: ["merge-pdf", "split-pdf", "compress-pdf"],
+    related: ["merge-pdf", "rotate-pdf", "compress-pdf"],
+  },
+  {
+    slug: "rotate-pdf",
+    name: "Rotate PDF",
+    family: "pdf",
+    summary: "Turn every page of a PDF the right way up in one step.",
+    processing: "device",
+    tier: "free",
+    status: "live",
+    mvp: true,
+    accepts: ["pdf"],
+    related: ["organize-pdf", "merge-pdf", "compress-pdf"],
   },
   {
     slug: "compress-pdf",
@@ -306,7 +366,7 @@ export const tools: readonly Tool[] = [
     summary: "Clear author, software and revision data from a PDF.",
     processing: "device",
     tier: "free",
-    status: "planned",
+    status: "live",
     mvp: true,
     accepts: ["pdf"],
     related: ["remove-location-from-photo", "compress-pdf", "organize-pdf"],
@@ -317,12 +377,12 @@ export const tools: readonly Tool[] = [
     slug: "remove-background",
     name: "Remove background",
     family: "ai",
-    summary: "Cut out a subject and export on transparent, white or a preset.",
+    summary: "Cut out a subject and export on a transparent background.",
     processing: "cloud",
     tier: "credits",
-    status: "planned",
+    status: "live",
     mvp: true,
-    accepts: ["jpg", "jpeg", "png", "webp", "heic"],
+    accepts: ["jpg", "jpeg", "png", "webp"],
     related: ["resize-image", "compress-image", "smartfix"],
   },
 
@@ -334,7 +394,7 @@ export const tools: readonly Tool[] = [
     summary: "Describe the outcome you need and we chain the right steps.",
     processing: "device",
     tier: "free",
-    status: "planned",
+    status: "live",
     mvp: true,
     accepts: ["pdf", "jpg", "jpeg", "png", "webp", "heic"],
     related: ["compress-pdf", "remove-background", "resize-image"],
@@ -351,6 +411,11 @@ export function getToolsByFamily(family: ToolFamily): Tool[] {
   return tools.filter((tool) => tool.family === family);
 }
 
+/** Deployment-safe family listing: only tools that are actually runnable now. */
+export function getLiveToolsByFamily(family: ToolFamily): Tool[] {
+  return tools.filter((tool) => tool.family === family && tool.status === "live");
+}
+
 /** Only live tools get indexed — see the §8.3 guardrail note at the top. */
 export function getIndexableTools(): Tool[] {
   return tools.filter((tool) => tool.status === "live");
@@ -361,7 +426,7 @@ export function getRelatedTools(slug: string): Tool[] {
   if (!tool) return [];
   return tool.related
     .map((relatedSlug) => bySlug.get(relatedSlug))
-    .filter((related): related is Tool => related !== undefined);
+    .filter((related): related is Tool => related !== undefined && related.status === "live");
 }
 
 export function getFamily(id: ToolFamily): FamilyMeta {

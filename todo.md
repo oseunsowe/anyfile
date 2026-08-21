@@ -118,7 +118,8 @@
 -   [ ] Implement crop/rotate.
 -   [x] Implement EXIF/GPS inspector.
 -   [x] Implement metadata removal. *(Canvas round trip carries pixels only.)*
--   [ ] Implement image → PDF. *(Blocked on the PDF engine.)*
+-   [x] Implement image → PDF. *(`image-to-pdf` tool, via `imagesToPdf` in
+    `ops/pdf.ts` — one page per image, multi-file ordered queue.)*
 -   [ ] Add batch-processing architecture.
 -   [ ] Add before/after image preview.
 -   [~] Validate output quality and browser compatibility. *(E2E covers Chromium
@@ -126,16 +127,19 @@
 
 ## P0 --- PDF MVP
 
--   [ ] Implement merge PDF.
+-   [x] Implement merge PDF. *(`merge-pdf` tool, ordered multi-file queue.)*
 -   [ ] Implement split PDF.
 -   [ ] Implement page extraction.
--   [ ] Implement page reorder.
--   [ ] Implement page rotation.
+-   [ ] Implement page reorder. *(`organizePdf` in `ops/pdf.ts` supports
+    keep/reorder/rotate already; no page-grid tool page yet — see
+    `organize-pdf`, still `planned`.)*
+-   [ ] Implement page rotation. *(Same `organizePdf` primitive as above.)*
 -   [ ] Implement delete pages.
 -   [ ] Implement PDF → image.
--   [ ] Implement images → PDF.
--   [ ] Implement basic PDF compression.
--   [ ] Implement PDF metadata removal.
+-   [x] Implement images → PDF. *(`image-to-pdf` tool.)*
+-   [ ] Implement basic PDF compression. *(Deliberately not offered — pdf-lib
+    cannot re-encode embedded images; see the scope note atop `ops/pdf.ts`.)*
+-   [x] Implement PDF metadata removal. *(`pdf-remove-metadata` tool.)*
 -   [ ] Add thumbnail/page organizer.
 -   [ ] Validate large/malformed PDF behavior.
 
@@ -162,9 +166,12 @@
 -   [ ] Create onboarding schema per operation.
 -   [ ] Exact-size: ask only target size.
 -   [ ] Conversion: recommend compatible output format.
--   [ ] Resize: offer destination presets before raw dimensions.
+-   [x] Resize: offer destination presets before raw dimensions. *(Profile
+    Picture Resizer — LinkedIn/Instagram/Facebook/X/WhatsApp/YouTube/Discord/GitHub.)*
 -   [ ] Metadata: explain detected private information.
--   [ ] PDF merge: teach through drag-to-order interaction.
+-   [x] PDF merge: teach through drag-to-order interaction. *(`FileQueue` —
+    numbered list with move up/down/remove, not literal drag; keyboard- and
+    touch-usable.)*
 -   [ ] PDF split: teach through visual page selection.
 -   [ ] Background removal: teach through live before/after.
 -   [ ] SmartFix: show "we found / we recommend / fix" sequence.

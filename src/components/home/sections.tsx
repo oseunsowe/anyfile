@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { Card, IconTile } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { Container, SectionHeading } from "@/components/ui/Container";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion/Reveal";
 import { FamilyIcon } from "@/components/tools/ToolCard";
 import { families } from "@/lib/tools";
 import { describeRequirement } from "@/lib/requirement";
-import { workflows } from "@/lib/workflows";
+import { getPublishableWorkflows } from "@/lib/workflows";
 
 /**
  * Product promises. Every line here is a property of the build we can point at
@@ -148,10 +147,14 @@ export function FamilyRail() {
 
 /**
  * Destination Workflows. Platform workflows without a verified, dated
- * requirement are shown as unavailable rather than published with numbers we
- * have not checked — see the note in `@/lib/workflows`.
+ * requirement are withheld entirely rather than published with numbers we
+ * have not checked, or shown as a placeholder card — see the note in
+ * `@/lib/workflows`.
  */
 export function WorkflowRail() {
+  const publishable = getPublishableWorkflows();
+  if (publishable.length === 0) return null;
+
   return (
     <section className="py-14 sm:py-20">
       <Container>
@@ -163,29 +166,21 @@ export function WorkflowRail() {
         </Reveal>
 
         <Stagger className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {workflows.map((workflow) => {
-            const published = workflow.source === "ours" || workflow.lastReviewed !== null;
+          {publishable.map((workflow) => {
             const summary = describeRequirement(workflow.requirement);
 
             return (
               <StaggerItem key={workflow.id}>
                 <Card className="flex h-full flex-col p-5">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-[0.9375rem] font-semibold text-ink">{workflow.name}</h3>
-                    {!published ? <Badge tone="neutral">Coming soon</Badge> : null}
-                  </div>
+                  <h3 className="text-[0.9375rem] font-semibold text-ink">{workflow.name}</h3>
 
                   <p className="mt-1.5 flex-1 text-[0.8125rem] leading-relaxed text-ink-muted">
                     {workflow.outcome}
                   </p>
 
-                  {published && summary ? (
+                  {summary ? (
                     <p className="mt-3 font-mono text-[0.75rem] text-brand-ink">{summary}</p>
-                  ) : (
-                    <p className="mt-3 text-[0.75rem] text-ink-subtle">
-                      Awaiting verified platform requirements.
-                    </p>
-                  )}
+                  ) : null}
                 </Card>
               </StaggerItem>
             );

@@ -7,9 +7,12 @@
  */
 
 import type { DetectedKind } from "@/lib/analyze";
+import type { Entitlements } from "@/lib/entitlements";
+import { CLOUD_AI_ENABLED } from "@/lib/featureFlags";
 import { HEIC_ENABLED } from "@/lib/ops/heic";
+import { isPaidPlan } from "@/lib/plans";
 import type { PlanStep } from "@/lib/planner";
-import type { ExecStep } from "@/lib/ops/protocol";
+import type { ExecStep, LeadOperation } from "@/lib/ops/protocol";
 import type { Requirement, TargetFormat } from "@/lib/requirement";
 
 export type Capabilities = {
@@ -68,12 +71,15 @@ export function detectCapabilities(): Capabilities {
   };
 }
 
-export type StepSupport = { ok: true } | { ok: false; reason: string };
+export type StepSupport =
+  | { ok: true }
+  | { ok: false; reason: string; cta?: { label: string; href: string } };
 
 export function supportsStep(
   step: PlanStep,
   kind: DetectedKind,
   capabilities: Capabilities,
+  entitlements?: Entitlements,
 ): StepSupport {
   if (!capabilities.offscreenCanvas || !capabilities.webWorker) {
     return { ok: false, reason: "This browser cannot process files locally." };
@@ -98,6 +104,9 @@ export function supportsStep(
         };
       case "resize":
         return { ok: false, reason: "PDF pages cannot be resized yet." };
+      case "rotate":
+      case "crop":
+        return { ok: false, reason: "Use Organize PDF to rotate or trim PDF pages." };
       case "convert":
         return { ok: false, reason: "Turning a PDF into images needs the PDF renderer." };
       default:
@@ -113,8 +122,29 @@ export function supportsStep(
     return { ok: false, reason: "This file type is not supported yet." };
   }
 
-  if (step.id === "remove-background" || step.id === "upscale") {
-    return { ok: false, reason: "Needs cloud processing, which is not enabled yet." };
+  if (step.id === "remove-background") {
+    if (!CLOUD_AI_ENABLED) {
+      return { ok: false, reason: "Needs cloud processing, which is not enabled yet." };
+    }
+    if (!entitlements?.loggedIn) {
+      return {
+        ok: false,
+        reason: "Background removal is a paid feature — sign in on a paid plan to use it.",
+        cta: { label: "Sign in", href: "/login" },
+      };
+    }
+    if (!isPaidPlan(entitlements.plan)) {
+      return {
+        ok: false,
+        reason: "Background removal is a paid feature — upgrade your plan to use it.",
+        cta: { label: "See plans", href: "/plans" },
+      };
+    }
+    return { ok: true };
+  }
+
+  if (step.id === "upscale") {
+    return { ok: false, reason: "AI upscaling is not enabled yet." };
   }
 
   return { ok: true };
@@ -130,6 +160,7 @@ export function toExecSteps(
   plan: readonly PlanStep[],
   requirement: Requirement,
   disabled: ReadonlySet<string>,
+  lead?: LeadOperation,
 ): ExecStep[] {
   const steps: ExecStep[] = [];
 
@@ -151,6 +182,20 @@ export function toExecSteps(
         });
         break;
 
+      case "rotate":
+        if (requirement.rotate) steps.push({ id: "rotate", degrees: requirement.rotate });
+        break;
+
+      case "crop":
+        if (requirement.cropAspect) steps.push({ id: "crop", aspect: requirement.cropAspect });
+        break;
+
+      case "watermark":
+        if (requirement.watermarkText) {
+          steps.push({ id: "watermark", text: requirement.watermarkText });
+        }
+        break;
+
       case "strip-metadata":
         steps.push({ id: "strip-metadata" });
         break;
@@ -163,6 +208,16 @@ export function toExecSteps(
 
       case "images-to-pdf":
         steps.push({ id: "images-to-pdf" });
+        break;
+
+      // keep/rotate come from the page list the user edited, not the Requirement.
+      case "organize-pdf":
+        steps.push({
+          id: "organize-pdf",
+          keep: lead?.keep,
+          rotate: lead?.rotate,
+          rotateAll: lead?.rotateAll,
+        });
         break;
 
       case "compress":

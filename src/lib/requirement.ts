@@ -10,6 +10,7 @@
  */
 
 import { formatBytes } from "@/lib/format";
+import type { CropAspect, RotateDegrees } from "@/lib/ops/resize";
 
 export type TargetFormat = "pdf" | "jpg" | "png" | "webp";
 
@@ -32,6 +33,12 @@ export type Requirement = {
   exactHeight?: number;
   /** Destination is public, so identifying metadata must be removed. */
   stripMetadata?: boolean;
+  /** Clockwise degrees to rotate before anything else runs. */
+  rotate?: RotateDegrees;
+  /** Centred crop to this shape, trimming rather than stretching. */
+  cropAspect?: CropAspect;
+  /** Stamped across the image, after resize so it survives at the final size. */
+  watermarkText?: string;
 };
 
 /** What we measured about a produced file. `null` means "not determined". */

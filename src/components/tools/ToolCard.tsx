@@ -39,7 +39,7 @@ export function ToolCard({ tool, className }: { tool: Tool; className?: string }
         <IconTile className={family.iconClass}>
           <FamilyIcon family={tool.family} />
         </IconTile>
-        {!isLive ? <Badge tone="neutral">Coming soon</Badge> : null}
+        {!isLive ? <Badge tone="neutral">Planned</Badge> : null}
       </div>
       <h3 className="mt-4 text-[0.9375rem] font-semibold text-ink">{tool.name}</h3>
       <p className="mt-1.5 text-[0.8125rem] leading-relaxed text-ink-muted">

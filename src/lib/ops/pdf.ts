@@ -106,6 +106,8 @@ export type PageEdit = {
   keep?: number[];
   /** Clockwise degrees to add, keyed by *original* page index. */
   rotate?: Record<number, number>;
+  /** Clockwise degrees to add to every kept page — for a whole-document rotate. */
+  rotateAll?: number;
 };
 
 export async function organizePdf(source: Blob, edit: PageEdit): Promise<Blob> {
@@ -125,7 +127,7 @@ export async function organizePdf(source: Blob, edit: PageEdit): Promise<Blob> {
 
   for (const [position, page] of copied.entries()) {
     const originalIndex = valid[position];
-    const turn = edit.rotate?.[originalIndex];
+    const turn = edit.rotate?.[originalIndex] ?? edit.rotateAll;
 
     if (turn) {
       // PDF rotation must be a multiple of 90 and is cumulative with any
