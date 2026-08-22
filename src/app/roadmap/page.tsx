@@ -20,12 +20,7 @@ const groups = [
   },
   {
     title: "PDF parity",
-    items: [
-      "PDF compression",
-      "PDF to image conversion",
-      "Password protect and unlock",
-      "OCR and searchable output",
-    ],
+    items: ["Password protect and unlock", "OCR and searchable output"],
   },
   {
     title: "Accounts and billing",

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { pageMetadata } from "@/lib/seo";
-import { getDemoCredentials, readDemoSession } from "@/lib/auth/demoSession";
+import { getDemoCredentials, readDemoSession, safeRedirectPath } from "@/lib/auth/demoSession";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = pageMetadata({
@@ -18,7 +18,7 @@ export default async function LoginPage({
 }) {
   const session = await readDemoSession();
   const params = await searchParams;
-  const nextPath = params.next?.startsWith("/") ? params.next : "/demo";
+  const nextPath = safeRedirectPath(params.next, "/demo");
   if (session) redirect(nextPath);
 
   const creds = getDemoCredentials();

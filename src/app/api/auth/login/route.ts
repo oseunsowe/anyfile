@@ -3,6 +3,7 @@ import {
   createDemoSessionToken,
   DEMO_SESSION_COOKIE,
   readDemoSession,
+  safeRedirectPath,
   validateDemoCredentials,
 } from "@/lib/auth/demoSession";
 
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
-  const nextPath = String(formData.get("next") || "/demo");
+  const nextPath = safeRedirectPath(String(formData.get("next") || ""), "/demo");
 
   if (!validateDemoCredentials(email, password)) {
     const target = new URL(`/login?error=invalid&next=${encodeURIComponent(nextPath)}`, request.url);

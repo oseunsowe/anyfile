@@ -211,7 +211,9 @@ export function ToolWorkspace({
               ? "Reorder, rotate, or remove pages before saving."
               : pageMode === "delete"
                 ? "Remove pages you do not want, then save the cleaned PDF."
-                : "Remove pages you do not want in the output PDF, then save it."}
+                : pageMode === "export"
+                  ? "Remove any pages you don't want exported, then save the images."
+                  : "Remove pages you do not want in the output PDF, then save it."}
           </p>
           <PageList
             order={pageOrder}

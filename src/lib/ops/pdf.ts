@@ -1,18 +1,25 @@
 /**
  * PDF operations, built on pdf-lib (MIT).
  *
- * Scope is deliberately narrower than the tool list. pdf-lib manipulates a PDF's
- * structure — pages, ordering, metadata — but it cannot re-encode the images
- * inside one. So merging, reordering and metadata removal are real here, while
- * "compress PDF" is not, and is not offered. Shipping a compressor that saves
- * two percent and calls it done would be exactly the kind of claim this product
- * exists to avoid.
+ * pdf-lib manipulates a PDF's structure — pages, ordering, metadata — but has
+ * no built-in support for re-encoding the images inside one, so `compressPdf`
+ * below does that itself: it walks each page's image XObjects, decodes the
+ * ones it can safely re-encode, and recompresses them through the same
+ * quality/scale search used for a standalone photo (`compressToTarget`). It
+ * is deliberately conservative about which images qualify (see
+ * `isRecompressibleImage`) — leaving an image untouched is always safe;
+ * mis-decoding one is not.
  *
  * pdf-lib is ~350 KB, so it is dynamically imported and never lands in the
  * initial payload (plan.md §14).
  */
 
+import { compressToTarget } from "@/lib/ops/image";
 import { OperationError } from "@/lib/ops/errors";
+import { CancelledError } from "@/lib/ops/quality";
+// Type-only: erased at compile time, so this does not pull pdf-lib into the
+// eager bundle the way importing its runtime values would.
+import type { PDFDict, PDFDocument, PDFRawStream, PDFRef } from "pdf-lib";
 
 type PdfLib = typeof import("pdf-lib");
 
@@ -204,6 +211,143 @@ export async function imagesToPdf(
     });
 
     onProgress?.(Math.round(((index + 1) / images.length) * 100));
+  }
+
+  return toPdfBlob(await doc.save());
+}
+
+/**
+ * Only re-encode an image XObject we can be certain we understand end to
+ * end. Every one of these conditions rules out a real failure mode:
+ *
+ *  - Subtype must be Image, Filter must be exactly `/DCTDecode` (a plain
+ *    baseline JPEG stream) — anything stacked, or a different codec
+ *    (JPX/CCITT/Flate-raw), we don't attempt to decode.
+ *  - ColorSpace must be exactly `/DeviceRGB` — ICCBased and CMYK JPEGs are
+ *    not reliably decodable via `createImageBitmap`, and DeviceGray would
+ *    silently come back as RGB from canvas, corrupting the component count.
+ *  - No SMask/Mask (transparency) and no Decode array (custom colour
+ *    remapping) — a canvas round trip cannot preserve either.
+ */
+function isRecompressibleImage(lib: PdfLib, dict: PDFDict): boolean {
+  const name = (key: string) => lib.PDFName.of(key);
+
+  if (dict.get(name("Subtype"))?.toString() !== "/Image") return false;
+  if (dict.get(name("Filter"))?.toString() !== "/DCTDecode") return false;
+  if (dict.get(name("ColorSpace"))?.toString() !== "/DeviceRGB") return false;
+  if (dict.get(name("BitsPerComponent"))?.toString() !== "8") return false;
+  if (dict.has(name("SMask")) || dict.has(name("Mask")) || dict.has(name("Decode"))) return false;
+
+  return true;
+}
+
+type ImageCandidate = {
+  /**
+   * The image's own indirect reference. Replacing what this points to via
+   * `context.assign` — rather than registering a new object and repointing
+   * the XObject dict at it — is what keeps the original bytes from being
+   * left behind as an unreferenced-but-still-written orphan: pdf-lib writes
+   * every registered object on save regardless of reachability, so orphaning
+   * one doesn't shrink the file at all, it grows it by the size of both.
+   */
+  ref: PDFRef;
+  stream: PDFRawStream;
+};
+
+function findRecompressibleImages(lib: PdfLib, doc: PDFDocument) {
+  const candidates: ImageCandidate[] = [];
+  const seen = new Set<string>();
+
+  for (const page of doc.getPages()) {
+    const resources = page.node.Resources();
+    const xobjects = resources?.lookupMaybe(lib.PDFName.of("XObject"), lib.PDFDict);
+    if (!xobjects) continue;
+
+    for (const [, ref] of xobjects.entries()) {
+      if (!(ref instanceof lib.PDFRef)) continue;
+      // The same image XObject can be shared by several pages — recompress
+      // it once, not once per page that references it.
+      if (seen.has(ref.toString())) continue;
+
+      const resolved = doc.context.lookup(ref);
+      if (!(resolved instanceof lib.PDFRawStream)) continue;
+      if (!isRecompressibleImage(lib, resolved.dict)) continue;
+
+      seen.add(ref.toString());
+      candidates.push({ ref, stream: resolved });
+    }
+  }
+
+  return candidates;
+}
+
+/**
+ * Shrinks a PDF toward a byte ceiling by recompressing the photos inside it —
+ * the actual weight in a large PDF is almost always its embedded images, not
+ * its text or vector content, which this never touches.
+ *
+ * Each qualifying image gets a byte budget proportional to its share of the
+ * recompressible total, then the same quality/scale search used for a
+ * standalone photo (`compressToTarget`). An image is only ever replaced if
+ * the result is smaller than what was there — never larger. If nothing in
+ * the document qualifies, the original bytes are returned unchanged: an
+ * honest "no change" is better than a compressor that silently does nothing
+ * and calls it a win.
+ */
+export async function compressPdf(
+  source: Blob,
+  maxBytes: number,
+  hooks: {
+    onProgress?: (percent: number) => void;
+    isCancelled?: () => boolean;
+  } = {},
+): Promise<Blob> {
+  const { onProgress, isCancelled } = hooks;
+  const lib = await loadPdfLib();
+  const doc = await load(lib, await bytesOf(source));
+
+  const candidates = findRecompressibleImages(lib, doc);
+  if (candidates.length === 0) return source;
+
+  const originalTotal = candidates.reduce((sum, c) => sum + c.stream.getContentsSize(), 0);
+  const overhead = source.size - originalTotal;
+  // What the images collectively need to add up to. If the non-image parts
+  // of the document already exceed the target, there is no budget left —
+  // compress as hard as the quality/scale floor allows and let the proof
+  // panel report the honest shortfall.
+  const imageBudget = Math.max(maxBytes - overhead, candidates.length * 4_000);
+
+  for (const [index, candidate] of candidates.entries()) {
+    if (isCancelled?.()) throw new CancelledError();
+
+    const originalBytes = candidate.stream.getContents();
+    const share = originalBytes.length / originalTotal;
+    const perImageTarget = Math.max(Math.round(imageBudget * share), 2_000);
+
+    const bitmap = await createImageBitmap(
+      new Blob([originalBytes.slice().buffer as ArrayBuffer], { type: "image/jpeg" }),
+    );
+
+    try {
+      const result = await compressToTarget(bitmap, "image/jpeg", perImageTarget, {
+        isCancelled,
+        onProgress: (percent) =>
+          onProgress?.(Math.round(((index + percent / 100) / candidates.length) * 100)),
+      });
+
+      const newBytes = new Uint8Array(await result.blob.arrayBuffer());
+      if (newBytes.length >= originalBytes.length) continue;
+
+      const newDict = candidate.stream.dict.clone(doc.context);
+      newDict.set(lib.PDFName.of("Length"), lib.PDFNumber.of(newBytes.length));
+      newDict.set(lib.PDFName.of("Width"), lib.PDFNumber.of(result.size.width));
+      newDict.set(lib.PDFName.of("Height"), lib.PDFNumber.of(result.size.height));
+
+      const newStream = lib.PDFRawStream.of(newDict, newBytes);
+      doc.context.assign(candidate.ref, newStream);
+    } finally {
+      bitmap.close();
+    }
   }
 
   return toPdfBlob(await doc.save());

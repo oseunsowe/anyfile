@@ -15,6 +15,7 @@ import {
 import { removeBackgroundInCloud } from "@/lib/cloud/client";
 import { useEntitlements } from "@/lib/entitlements";
 import { CLOUD_AI_ENABLED } from "@/lib/featureFlags";
+import { exportPdfPagesAsImages } from "@/lib/ops/pdfRender";
 import { getPlan, isPaidPlan } from "@/lib/plans";
 import { evaluateRequirement, type Requirement } from "@/lib/requirement";
 import type { LeadOperation } from "@/lib/ops/protocol";
@@ -173,13 +174,17 @@ export function useFilePipeline({
       entitlements.loggedIn &&
       isPaidPlan(entitlements.plan) &&
       activePlan.some((step) => step.id === "remove-background");
+    // Rendering runs on the main thread (see ops/pdfRender.ts), not the
+    // worker, so it never produces an ExecStep — it's driven by the lead
+    // operation directly, the same way the cloud step above is.
+    const wantsPdfExport = lead?.id === "pdf-to-images";
     const localSteps = toExecSteps(plan, requirement, disabledSteps, lead);
 
-    if (!wantsCloudBackground && localSteps.length === 0) return;
+    if (!wantsCloudBackground && !wantsPdfExport && localSteps.length === 0) return;
 
     const controller = new AbortController();
     abortRef.current = controller;
-    const totalStepCount = localSteps.length + (wantsCloudBackground ? 1 : 0);
+    const totalStepCount = localSteps.length + (wantsCloudBackground || wantsPdfExport ? 1 : 0);
 
     setPhase("running");
     setError(null);
@@ -210,7 +215,28 @@ export function useFilePipeline({
 
       let output: PipelineResult;
 
-      if (localSteps.length === 0) {
+      if (wantsPdfExport) {
+        setProgress({ percent: 10, label: "Rendering pages", stepIndex: 0, stepCount: totalStepCount });
+
+        const exported = await exportPdfPagesAsImages(files[0], files[0].name, {
+          pages: lead?.keep,
+          isCancelled: () => controller.signal.aborted,
+          onProgress: (percent) =>
+            setProgress({ percent, label: "Rendering pages", stepIndex: 0, stepCount: totalStepCount }),
+        });
+
+        // A rendered page or a zip of several isn't one determinate format —
+        // reporting either as "jpg" would mislead the one file-format check
+        // that could ever run against it.
+        output = {
+          blob: exported.blob,
+          filename: exported.filename,
+          format: null,
+          width: null,
+          height: null,
+          metadataStripped: false,
+        };
+      } else if (localSteps.length === 0) {
         const cloudFile = inputFiles[0];
         const cloudAnalysis = await analyzeFile(cloudFile);
         output = {

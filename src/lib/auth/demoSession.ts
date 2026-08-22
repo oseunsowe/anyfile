@@ -37,6 +37,23 @@ function getSessionSecret() {
   return INSECURE_DEV_FALLBACK_SECRET;
 }
 
+/**
+ * Validates a `next` redirect target before it's ever handed to
+ * `NextResponse.redirect` or `redirect()`.
+ *
+ * Must be an app-relative path only. `startsWith("/")` alone is not enough —
+ * `//evil.example` and `/\evil.example` both start with `/` but browsers
+ * resolve them as protocol-relative URLs to a different origin, which is
+ * exactly the open-redirect bypass this exists to close.
+ */
+export function safeRedirectPath(value: string | null | undefined, fallback: string): string {
+  if (!value) return fallback;
+  if (!value.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) {
+    return fallback;
+  }
+  return value;
+}
+
 export function getDemoCredentials() {
   return {
     email: process.env.DEMO_LOGIN_EMAIL?.trim() || DEFAULT_DEMO_EMAIL,

@@ -57,7 +57,7 @@ export type ToolPreset =
     }
   | { kind: "transform" }
   /** Per-page PDF editing — mode controls which controls are shown. */
-  | { kind: "pages"; mode: "organize" | "split" | "extract" | "delete" }
+  | { kind: "pages"; mode: "organize" | "split" | "extract" | "delete" | "export" }
   /** Whole-document rotate — every page turned by the same amount, no page list needed. */
   | { kind: "pdf-rotate" }
   /** A single text field, stamped across the image once non-empty. */
@@ -889,6 +889,109 @@ export const toolContent: Record<string, ToolContent> = {
       },
     ],
   },
+  // -------------------------------------------------------------------------
+  "compress-pdf": {
+    h1: "Compress a PDF",
+    metaTitle: "Compress a PDF to any size you need",
+    metaDescription:
+      "Shrink a PDF by recompressing the photos inside it, in your browser. Set the size you need.",
+    intro:
+      "A large PDF is almost always large because of the photos inside it, not its text — so this recompresses those photos toward the size you set, the same way our image compressor does, and leaves the text and vector content untouched. A PDF that is already mostly text may barely change; one built from scanned or embedded photos usually shrinks a lot.",
+    preset: {
+      kind: "size",
+      label: "How small does it need to be?",
+      hint: "We recompress the embedded photos toward this — text and page layout are never touched.",
+      defaultBytes: 2_000_000,
+    },
+    accept: PDF_ACCEPT,
+    faqs: [
+      {
+        question: "What exactly gets changed?",
+        answer:
+          "Only the photos embedded in the pages, and only the ones we can safely re-encode (standard JPEG photos). Text, vector graphics, page size and page count are never touched.",
+      },
+      {
+        question: "Why did my PDF barely shrink?",
+        answer:
+          "If it's mostly text, or its images are already small, there isn't much to recompress — we say so rather than pretending a re-save is a real reduction. If its images use a format we don't re-encode yet (CMYK photos, JPEG2000, embedded PNGs), we leave those as they are rather than risk corrupting them, so the file can come back unchanged.",
+      },
+      {
+        question: "Will this work on a password-protected PDF?",
+        answer:
+          "No. Remove the password in the application that created it first, then compress it here.",
+      },
+    ],
+  },
+
+  // -------------------------------------------------------------------------
+  "compress-pdf-under-2mb": {
+    h1: "Make a PDF under 2 MB",
+    metaTitle: "Compress a PDF to under 2 MB",
+    metaDescription:
+      "Hit a 2 MB upload limit by recompressing the photos inside a PDF, with the result checked against the limit.",
+    intro:
+      "2 MB is a common ceiling on application portals and email attachments. Drop a PDF here and we recompress its embedded photos toward that limit and check the finished file against it — the same approach as Compress PDF, fixed to this one target.",
+    preset: { kind: "fixed", requirement: { maxBytes: 2_000_000 } },
+    accept: PDF_ACCEPT,
+    faqs: [
+      {
+        question: "What if it can't get under 2 MB?",
+        answer:
+          "We recompress every photo we safely can and tell you plainly if the result still doesn't fit, rather than showing a false pass. A PDF that's mostly text and already small, or whose bulk isn't in re-encodable photos, may not have much room to give.",
+      },
+      {
+        question: "Does this touch the text or page layout?",
+        answer:
+          "No — only the embedded photos are recompressed. Text, vector content and page count are never changed.",
+      },
+      {
+        question: "Do you keep a copy of the file?",
+        answer:
+          "No. Compression runs inside your browser using your own device's processor. The PDF is never sent to us.",
+      },
+    ],
+  },
+
+  // -------------------------------------------------------------------------
+  "pdf-to-jpg": {
+    h1: "Convert a PDF to JPG",
+    metaTitle: "Convert PDF pages to JPG images",
+    metaDescription:
+      "Export every page of a PDF as a JPG, or just the pages you pick, entirely in your browser.",
+    intro:
+      "Every page renders exactly as it looks in the PDF — text, images and layout together — as a JPG you can drop into a slide deck, a chat, or anywhere that doesn't take PDFs. Pick the pages you want, or leave them all selected. One page downloads as a single JPG; several download together as one zip.",
+    preset: { kind: "pages", mode: "export" },
+    accept: PDF_ACCEPT,
+    lead: {
+      id: "pdf-to-images",
+      title: "Export as JPG",
+      reason: "Renders each selected page exactly as it appears in the PDF.",
+      tool: "pdf-to-jpg",
+    },
+    faqs: [
+      {
+        question: "What if I only want some pages?",
+        answer:
+          "Remove the ones you don't want from the list above before exporting — only the pages left in the list are rendered.",
+      },
+      {
+        question: "Why do I get a zip file instead of separate downloads?",
+        answer:
+          "Browsers don't offer several files from one click, so exporting more than one page bundles them into a single zip. Exporting exactly one page downloads that JPG directly.",
+      },
+      {
+        question: "Will the text still be selectable in the JPG?",
+        answer:
+          "No — a JPG is a picture of the page, not text. If you need the text itself, copy it from the PDF directly rather than converting to an image first.",
+      },
+      {
+        question: "Will this work on a password-protected PDF?",
+        answer:
+          "No. Remove the password in the application that created it first, then convert it here.",
+      },
+    ],
+  },
+
   // -------------------------------------------------------------------------
   smartfix: {
     h1: "SmartFix — describe the result you need",

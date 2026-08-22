@@ -86,22 +86,21 @@ export function supportsStep(
   }
 
   /**
-   * PDF support is real but partial, and the boundary is structural rather
-   * than arbitrary: pdf-lib rearranges a document but cannot re-encode the
-   * images inside it, and we have no page renderer. So say which is which
-   * instead of blocking the whole format.
+   * PDF support is real but partial. "compress" recompresses the embedded
+   * photos a page draws rather than the page itself, so it needs no
+   * renderer. "pdf-to-images" (PDF to JPG's dedicated lead operation, see
+   * ops/pdfRender.ts) does rasterize pages — but only that one path; the
+   * generic "convert" a Requirement can ask for is not wired to it, so it
+   * still says no below.
    */
   if (kind === "pdf") {
     switch (step.id) {
       case "merge-pdf":
       case "organize-pdf":
+      case "pdf-to-images":
       case "strip-metadata":
-        return { ok: true };
       case "compress":
-        return {
-          ok: false,
-          reason: "PDF compression needs image re-encoding inside the document, which is not built yet.",
-        };
+        return { ok: true };
       case "resize":
         return { ok: false, reason: "PDF pages cannot be resized yet." };
       case "rotate":
@@ -227,7 +226,9 @@ export function toExecSteps(
         break;
 
       default:
-        // remove-background / upscale are cloud work and never reach the worker.
+        // remove-background / upscale are cloud work, and pdf-to-images
+        // renders on the main thread (see ops/pdfRender.ts) — none of these
+        // ever reach the worker.
         break;
     }
   }

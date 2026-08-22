@@ -41,18 +41,18 @@ const COMBINERS = new Set<ExecStepId>(["merge-pdf", "images-to-pdf"]);
 
 /**
  * A step supplied by the tool page rather than derived from the Requirement.
- * Merging several PDFs, or applying a page-by-page reorder/rotate/delete, is
- * not expressible as "what the destination accepts", so those tools declare
- * the operation directly.
+ * Merging several PDFs, applying a page-by-page reorder/rotate/delete, or
+ * exporting pages as images is not expressible as "what the destination
+ * accepts", so those tools declare the operation directly.
  */
 export type LeadOperation = {
-  id: "merge-pdf" | "images-to-pdf" | "organize-pdf";
+  id: "merge-pdf" | "images-to-pdf" | "organize-pdf" | "pdf-to-images";
   title: string;
   reason: string;
   tool: string;
   /** Below this many queued files, running would be pointless (e.g. a merge of one). */
   minFiles?: number;
-  /** organize-pdf only — zero-based original page indices to keep, in output order. */
+  /** organize-pdf/pdf-to-images — zero-based original page indices to keep/export, in order. */
   keep?: number[];
   /** organize-pdf only — clockwise degrees added, keyed by original page index. */
   rotate?: Record<number, number>;

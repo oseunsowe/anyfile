@@ -3,6 +3,7 @@ import {
   createDemoSessionToken,
   DEMO_SESSION_COOKIE,
   readDemoSession,
+  safeRedirectPath,
 } from "@/lib/auth/demoSession";
 import { getPlan, isPlanId } from "@/lib/plans";
 
@@ -17,8 +18,7 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   const formData = await request.formData();
   const planId = String(formData.get("plan") || "");
-  const nextPath = String(formData.get("next") || "/plans");
-  const safeNext = nextPath.startsWith("/") ? nextPath : "/plans";
+  const safeNext = safeRedirectPath(String(formData.get("next") || ""), "/plans");
 
   if (!isPlanId(planId) || !getPlan(planId).selectable) {
     return NextResponse.json({ error: "Unknown or non-selectable plan." }, { status: 400 });

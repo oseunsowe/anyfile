@@ -23,7 +23,7 @@ import {
   rotateImage,
 } from "@/lib/ops/image";
 import { OperationError } from "@/lib/ops/errors";
-import { imagesToPdf, mergePdfs, organizePdf, stripPdfMetadata } from "@/lib/ops/pdf";
+import { compressPdf, imagesToPdf, mergePdfs, organizePdf, stripPdfMetadata } from "@/lib/ops/pdf";
 import { CancelledError } from "@/lib/ops/quality";
 import {
   EXTENSION_BY_FORMAT,
@@ -251,11 +251,16 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         case "resize":
         case "compress": {
           if (mime === PDF_MIME) {
-            throw new OperationError(
-              step.id === "compress"
-                ? "PDF compression is not available yet — it needs image re-encoding inside the document."
-                : "PDF pages cannot be resized yet.",
-            );
+            if (step.id === "resize") {
+              throw new OperationError("PDF pages cannot be resized yet.");
+            }
+
+            current = await compressPdf(current, step.maxBytes, {
+              onProgress: report,
+              isCancelled,
+            });
+            reEncoded = true;
+            break;
           }
 
           // Decoded per step: the previous step produced new bytes, and holding
