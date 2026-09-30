@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
 import { Container } from "@/components/ui/Container";
 import { footerNav, site } from "@/lib/site";
+import { getIndexableTools } from "@/lib/tools";
 
 export function SiteFooter() {
   return (
@@ -38,13 +39,28 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-3 border-t border-line pt-6 text-[0.8125rem] text-ink-muted sm:flex-row sm:items-center sm:justify-between">
+        <nav aria-label="All tools" className="mt-10 border-t border-line pt-6">
+          <h2 className="text-[0.8125rem] font-semibold text-ink">Popular tools</h2>
+          <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+            {getIndexableTools().map((tool) => (
+              <li key={tool.slug}>
+                <Link
+                  href={`/${tool.slug}`}
+                  className="rounded text-[0.8125rem] text-ink-muted transition-colors hover:text-ink"
+                >
+                  {tool.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="mt-8 flex flex-col gap-3 border-t border-line pt-6 text-[0.8125rem] text-ink-muted sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {new Date().getFullYear()} {site.name}. All rights reserved.
           </p>
           <p>
-            Most tools run entirely in your browser. Files used by cloud tools are
-            deleted automatically.
+            Files are processed in your browser and are never uploaded to our servers.
           </p>
         </div>
       </Container>

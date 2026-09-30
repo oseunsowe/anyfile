@@ -14,7 +14,7 @@ export default function TermsPage() {
     <section className="py-12 sm:py-16">
       <Container className="max-w-4xl">
         <h1 className="text-3xl font-semibold text-ink sm:text-4xl">Terms of Use</h1>
-        <p className="mt-3 text-sm text-ink-muted">Last updated: 2026-08-17</p>
+        <p className="mt-3 text-sm text-ink-muted">Last updated: 30 September 2026</p>
 
         <div className="mt-8 space-y-7 text-[0.9375rem] leading-relaxed text-ink-muted">
           <section>
@@ -64,7 +64,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-ink">6. Contact</h2>
-            <p className="mt-2">Questions about these terms: legal@anyfilekits.com.</p>
+            <p className="mt-2">Questions about these terms: contact@anyfilekits.com.</p>
           </section>
         </div>
       </Container>

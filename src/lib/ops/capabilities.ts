@@ -125,20 +125,6 @@ export function supportsStep(
     if (!CLOUD_AI_ENABLED) {
       return { ok: false, reason: "Needs cloud processing, which is not enabled yet." };
     }
-    if (!entitlements?.loggedIn) {
-      return {
-        ok: false,
-        reason: "Background removal is a paid feature — sign in on a paid plan to use it.",
-        cta: { label: "Sign in", href: "/login" },
-      };
-    }
-    if (!isPaidPlan(entitlements.plan)) {
-      return {
-        ok: false,
-        reason: "Background removal is a paid feature — upgrade your plan to use it.",
-        cta: { label: "See plans", href: "/plans" },
-      };
-    }
     return { ok: true };
   }
 

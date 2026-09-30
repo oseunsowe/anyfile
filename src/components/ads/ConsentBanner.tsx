@@ -21,7 +21,7 @@ export function ConsentBanner() {
   if (consent !== "unknown") return null;
 
   return (
-    <aside className="fixed inset-x-3 bottom-3 z-50 mx-auto w-full max-w-2xl rounded-card border border-line bg-surface p-4 shadow-lg sm:inset-x-6 sm:bottom-6">
+    <aside className="fixed inset-x-3 bottom-3 z-50 mx-auto max-w-2xl rounded-card border border-line bg-surface p-4 shadow-lg sm:inset-x-6 sm:bottom-6">
       <p className="text-sm font-semibold text-ink">Cookie and ad consent</p>
       <p className="mt-1 text-xs leading-relaxed text-ink-muted">
         We use essential storage for file processing and optional ad cookies for

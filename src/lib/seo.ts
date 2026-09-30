@@ -72,6 +72,41 @@ export function breadcrumbJsonLd(crumbs: readonly Crumb[]) {
   };
 }
 
+export function websiteJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: site.name,
+    url: site.url,
+    description: site.description,
+    inLanguage: "en-US",
+  };
+}
+
+export function articleJsonLd(input: {
+  title: string;
+  description: string;
+  path: string;
+  datePublished: string;
+  dateModified: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: input.title,
+    description: input.description,
+    mainEntityOfPage: absoluteUrl(input.path),
+    datePublished: input.datePublished,
+    dateModified: input.dateModified,
+    author: { "@type": "Organization", name: site.name, url: site.url },
+    publisher: {
+      "@type": "Organization",
+      name: site.name,
+      logo: { "@type": "ImageObject", url: absoluteUrl("/brand/anyfilekits-mark.svg") },
+    },
+  };
+}
+
 export function organizationJsonLd() {
   return {
     "@context": "https://schema.org",
@@ -80,6 +115,7 @@ export function organizationJsonLd() {
     url: site.url,
     logo: absoluteUrl("/brand/anyfilekits-mark.svg"),
     description: site.description,
+    email: "contact@anyfilekits.com",
   };
 }
 

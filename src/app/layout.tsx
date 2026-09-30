@@ -7,9 +7,8 @@ import { ConsentBanner } from "@/components/ads/ConsentBanner";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { readDemoSession } from "@/lib/auth/demoSession";
 import { EntitlementsProvider, type Entitlements } from "@/lib/entitlements";
-import { organizationJsonLd } from "@/lib/seo";
+import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import { site } from "@/lib/site";
 
 const geistSans = Geist({
@@ -34,23 +33,31 @@ export const metadata: Metadata = {
   description: site.description,
   applicationName: site.name,
   formatDetection: { telephone: false },
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/brand/anyfilekits-mark.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  ...(process.env.NEXT_PUBLIC_ADSENSE_CLIENT
+    ? { other: { "google-adsense-account": process.env.NEXT_PUBLIC_ADSENSE_CLIENT } }
+    : {}),
 };
 
 export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f4f5fa" },
     { media: "(prefers-color-scheme: dark)", color: "#0a0e1a" },
   ],
 };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const session = await readDemoSession();
-  const entitlements: Entitlements = {
-    loggedIn: session !== null,
-    email: session?.sub ?? null,
-    plan: session?.plan ?? "free",
-  };
+const entitlements: Entitlements = { loggedIn: false, email: null, plan: "free" };
 
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en-US"
@@ -62,7 +69,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         </a>
         <EntitlementsProvider value={entitlements}>
           <AdProvider />
-          <SiteHeader entitlements={entitlements} />
+          <SiteHeader />
           <main id="main" className="flex-1">
             {children}
           </main>
@@ -70,6 +77,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <ConsentBanner />
         </EntitlementsProvider>
         <JsonLd data={organizationJsonLd()} />
+        <JsonLd data={websiteJsonLd()} />
       </body>
     </html>
   );

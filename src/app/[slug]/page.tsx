@@ -9,8 +9,6 @@ import { Container } from "@/components/ui/Container";
 import { PrivacyBadge } from "@/components/ui/Badge";
 import { SmartFixConsole } from "@/components/home/SmartFixConsole";
 import { ToolWorkspace } from "@/components/tools/ToolWorkspace";
-import { readDemoSession } from "@/lib/auth/demoSession";
-import { isPaidPlan } from "@/lib/plans";
 import { pageMetadata, toolJsonLd } from "@/lib/seo";
 import { getIndexableTools, getTool } from "@/lib/tools";
 import { getToolContent } from "@/lib/toolContent";
@@ -51,9 +49,6 @@ export default async function ToolPage({ params }: PageProps<"/[slug]">) {
   const content = getToolContent(slug);
 
   if (!tool || !content || tool.status !== "live") notFound();
-
-  const session = await readDemoSession();
-  const isPaidUser = session !== null && isPaidPlan(session.plan);
 
   return (
     <>
@@ -96,7 +91,7 @@ export default async function ToolPage({ params }: PageProps<"/[slug]">) {
 
       {/* §7: one ad below the tool input, never between upload and processing. */}
       <div className="border-b border-line py-8">
-        <AdSlot format="leaderboard" isPaidUser={isPaidUser} />
+        <AdSlot format="leaderboard" />
       </div>
 
       <FaqSection entries={content.faqs} />

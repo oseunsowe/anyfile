@@ -21,12 +21,12 @@ const faqs = [
   {
     question: "Do my files get uploaded to a server?",
     answer:
-      "Diagnosis and everyday operations such as conversion, resizing, metadata removal and PDF rearrangement run entirely in your browser — the file never leaves your device. A small number of AI operations need cloud processing, and those are labelled as such everywhere they appear.",
+      "No. Diagnosis and everyday operations such as conversion, resizing, compression, metadata removal and PDF rearrangement run entirely in your browser. The file never leaves your device.",
   },
   {
     question: "Do I need an account?",
     answer:
-      "No. You can drop a file, see what we found and get a result without signing up. An account only becomes useful when you want to save a Recipe, run larger batches or keep presets in sync.",
+      "No. There is nothing to sign up for. Drop a file, see what we found and get a result straight away.",
   },
   {
     question: "What does “tell us the result” actually mean?",
@@ -54,7 +54,7 @@ export default function HomePage() {
       <HowItWorks />
       <FamilyRail />
       <WorkflowRail />
-      <FaqSection entries={faqs} className="border-t border-line bg-surface-muted" />
+      <FaqSection entries={faqs} emitStructuredData className="border-t border-line bg-surface-muted" />
     </>
   );
 }

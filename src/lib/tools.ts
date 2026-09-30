@@ -380,7 +380,7 @@ export const tools: readonly Tool[] = [
     summary: "Cut out a subject and export on a transparent background.",
     processing: "cloud",
     tier: "credits",
-    status: "live",
+    status: "planned",
     mvp: true,
     accepts: ["jpg", "jpeg", "png", "webp"],
     related: ["resize-image", "compress-image", "smartfix"],

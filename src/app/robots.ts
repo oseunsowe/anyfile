@@ -6,24 +6,15 @@ import { absoluteUrl } from "@/lib/seo";
  * can expose a user's own work in search results, so the rule lives here rather
  * than depending on per-page metadata being remembered.
  */
+export const dynamic = "force-static";
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: "*",
         allow: "/",
-        disallow: [
-          "/api/",
-          "/app/",
-          "/account/",
-          "/dashboard/",
-          "/demo",
-          "/result/",
-          "/f/",
-          "/login",
-          "/signup",
-          "/*?file=",
-        ],
+        disallow: ["/*?file="],
       },
     ],
     sitemap: absoluteUrl("/sitemap.xml"),
