@@ -54,12 +54,6 @@ const SLOT_BY_FORMAT: Record<AdFormat, string | undefined> = {
   rail: process.env.NEXT_PUBLIC_ADSENSE_SLOT_RAIL,
 };
 
-declare global {
-  interface Window {
-    adsbygoogle?: Array<Record<string, unknown>>;
-  }
-}
-
 export function AdSlot({
   format,
   isPaidUser = false,
@@ -77,8 +71,8 @@ export function AdSlot({
   const client = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
   const slot = SLOT_BY_FORMAT[format];
   const adsEnabled = useMemo(
-    () => Boolean(client && slot && consent === "granted"),
-    [client, consent, slot],
+    () => Boolean(client && slot),
+    [client, slot],
   );
 
   useEffect(() => {

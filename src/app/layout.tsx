@@ -63,6 +63,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en-US"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        {process.env.NEXT_PUBLIC_ADSENSE_CLIENT ? (
+          <script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT}`}
+            crossOrigin="anonymous"
+          />
+        ) : null}
+      </head>
       <body className="flex min-h-full flex-col bg-canvas text-ink">
         <a href="#main" className="skip-link rounded-control bg-solid px-4 py-2 text-sm font-medium text-ink-inverse">
           Skip to content
