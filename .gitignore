@@ -43,3 +43,6 @@ next-env.d.ts
 # E2E fixtures are downloaded on demand, not committed
 tests/e2e/.fixtures/
 sftp.md
+
+# public IDs only (AdSense/GA); safe to commit
+!.env.production
