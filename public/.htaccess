@@ -16,6 +16,10 @@ DirectoryIndex index.html
 
   RewriteRule ^_next/static/ - [E=IMMUTABLE:1]
 
+  # Next prefetch payloads: /x/__next.x.__PAGE__.txt -> /x/__next.x/__PAGE__.txt
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^(.+/)?(__next.[^/]+).(__PAGE__.txt)$ /$1$2/$3 [L]
+
   # /page -> /page/ (matches trailingSlash export layout)
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteCond %{REQUEST_URI} !/$
@@ -30,7 +34,7 @@ ErrorDocument 404 /404.html
   Header always set X-Frame-Options "SAMEORIGIN"
   Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
   Header always set Strict-Transport-Security "max-age=31536000"
-  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.googletagservices.com https://adservice.google.com https://partner.googleadservices.com https://fundingchoicesmessages.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://ep1.adtrafficquality.google https://fundingchoicesmessages.google.com; frame-src https://googleads.g.doubleclick.net https://*.googlesyndication.com https://tpc.googlesyndication.com https://fundingchoicesmessages.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://pagead2.googlesyndication.com https://*.adtrafficquality.google https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.googletagservices.com https://adservice.google.com https://partner.googleadservices.com https://fundingchoicesmessages.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.adtrafficquality.google https://fundingchoicesmessages.google.com; frame-src https://*.adtrafficquality.google https://googleads.g.doubleclick.net https://*.googlesyndication.com https://tpc.googlesyndication.com https://fundingchoicesmessages.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
 
   # Long-lived caching for fingerprinted assets
   <FilesMatch "\.(js|css|woff2|svg|png|jpg|jpeg|webp|ico|wasm)$">

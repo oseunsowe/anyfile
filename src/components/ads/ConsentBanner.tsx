@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CONSENT_STORAGE_KEY,
   parseConsentState,
@@ -13,10 +13,14 @@ function saveConsent(next: Exclude<ConsentState, "unknown">) {
 }
 
 export function ConsentBanner() {
-  const [consent, setConsent] = useState<ConsentState>(() => {
-    if (typeof window === "undefined") return "unknown";
-    return parseConsentState(window.localStorage.getItem(CONSENT_STORAGE_KEY));
-  });
+  // Start hidden and read the saved choice after mount. Reading localStorage
+  // during render made the client's first render differ from the statically
+  // exported HTML, so React kept the server-rendered banner on screen.
+  const [consent, setConsent] = useState<ConsentState | "pending">("pending");
+
+  useEffect(() => {
+    setConsent(parseConsentState(window.localStorage.getItem(CONSENT_STORAGE_KEY)));
+  }, []);
 
   if (consent !== "unknown") return null;
 
