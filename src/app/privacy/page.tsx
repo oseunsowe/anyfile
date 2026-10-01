@@ -93,6 +93,17 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
+            <h2 className="text-xl font-semibold text-ink">3a. Analytics</h2>
+            <p className="mt-2">
+              We use Google Analytics to understand which pages are visited and how people
+              find the site. Analytics cookies are only enabled if you accept optional
+              cookies. Without consent, Google Analytics runs in a restricted mode that
+              does not store cookies on your device. Analytics never receives the contents
+              of your files, because files are processed locally in your browser.
+            </p>
+          </section>
+
+          <section>
             <h2 className="text-xl font-semibold text-ink">4. Users in the EEA, UK and Switzerland</h2>
             <p className="mt-2">
               We ask for your consent before loading advertising cookies. You can withdraw

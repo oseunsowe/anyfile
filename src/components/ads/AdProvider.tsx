@@ -11,6 +11,7 @@ declare global {
     adsbygoogle?: Array<Record<string, unknown>> & {
       requestNonPersonalizedAds?: number;
     };
+    gtag?: (...args: unknown[]) => void;
   }
 }
 
@@ -26,6 +27,13 @@ export function AdProvider() {
       const consent = parseConsentState(window.localStorage.getItem(CONSENT_STORAGE_KEY));
       const queue = (window.adsbygoogle = window.adsbygoogle || []);
       queue.requestNonPersonalizedAds = consent === "granted" ? 0 : 1;
+      const state = consent === "granted" ? "granted" : "denied";
+      window.gtag?.("consent", "update", {
+        analytics_storage: state,
+        ad_storage: state,
+        ad_user_data: state,
+        ad_personalization: state,
+      });
     };
 
     apply();

@@ -1,3 +1,5 @@
+import { moreGuides } from "@/lib/guides-more";
+
 /**
  * Editorial guides. Each one answers a specific question people search for and
  * links to the tool that does the job, so guides feed tool pages with
@@ -25,7 +27,7 @@ export type Guide = {
   tools: readonly string[];
 };
 
-export const guides: readonly Guide[] = [
+const baseGuides: readonly Guide[] = [
   {
     slug: "how-to-compress-a-pdf-under-2mb",
     title: "How to compress a PDF under 2 MB",
@@ -464,6 +466,8 @@ export const guides: readonly Guide[] = [
     tools: ["pdf-remove-metadata", "compress-pdf", "delete-pdf-pages"],
   },
 ];
+
+export const guides: readonly Guide[] = [...baseGuides, ...moreGuides];
 
 export function getGuide(slug: string): Guide | undefined {
   return guides.find((g) => g.slug === slug);

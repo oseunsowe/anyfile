@@ -8,6 +8,9 @@ import {
   WorkflowRail,
 } from "@/components/home/sections";
 import { FaqSection } from "@/components/seo/FaqSection";
+import Link from "next/link";
+import { Container, SectionHeading } from "@/components/ui/Container";
+import { guides } from "@/lib/guides";
 import { pageMetadata } from "@/lib/seo";
 import { site } from "@/lib/site";
 
@@ -54,6 +57,31 @@ export default function HomePage() {
       <HowItWorks />
       <FamilyRail />
       <WorkflowRail />
+      <section className="border-t border-line py-14 sm:py-20">
+        <Container>
+          <SectionHeading
+            title="Helpful guides"
+            description="Step-by-step answers for the most common PDF and image problems."
+          />
+          <ul className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {guides.slice(0, 6).map((guide) => (
+              <li key={guide.slug}>
+                <Link
+                  href={`/guides/${guide.slug}`}
+                  className="block h-full rounded-card border border-line bg-surface p-4 text-[0.9375rem] font-medium text-ink transition-colors hover:border-ink-subtle"
+                >
+                  {guide.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-5">
+            <Link href="/guides" className="text-[0.9375rem] font-medium text-ink underline underline-offset-4">
+              See all guides
+            </Link>
+          </p>
+        </Container>
+      </section>
       <FaqSection entries={faqs} emitStructuredData className="border-t border-line bg-surface-muted" />
     </>
   );

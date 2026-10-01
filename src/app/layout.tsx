@@ -55,6 +55,8 @@ export const viewport: Viewport = {
   ],
 };
 
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+
 const entitlements: Entitlements = { loggedIn: false, email: null, plan: "free" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -64,6 +66,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        {GA_ID ? (
+          <>
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}window.gtag=gtag;gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',wait_for_update:500});try{if(localStorage.getItem('afk-consent-v1')==='granted'){gtag('consent','update',{analytics_storage:'granted',ad_storage:'granted',ad_user_data:'granted',ad_personalization:'granted'});}}catch(e){}gtag('js',new Date());gtag('config','${GA_ID}');`,
+              }}
+            />
+            <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} />
+          </>
+        ) : null}
         {process.env.NEXT_PUBLIC_ADSENSE_CLIENT ? (
           <script
             async
