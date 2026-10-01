@@ -89,7 +89,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "heic-to-jpg": {
     h1: "Convert HEIC to JPG",
-    metaTitle: "Convert HEIC to JPG — iPhone photos that open anywhere",
+    metaTitle: "HEIC to JPG Converter – Free Online, No Upload",
     metaDescription:
       "Turn iPhone HEIC photos into JPGs that Windows, websites and older apps can actually open. Converts in your browser.",
     intro:
@@ -128,7 +128,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "compress-image": {
     h1: "Compress an image",
-    metaTitle: "Compress an image to any size you need",
+    metaTitle: "Compress Image Online – Reduce Photo Size Free",
     metaDescription:
       "Set the exact file size you need and compress a JPG, PNG or WebP down to it in your browser. Nothing is uploaded.",
     intro:
@@ -162,7 +162,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "image-under-1mb": {
     h1: "Make an image under 1 MB",
-    metaTitle: "Compress an image to under 1 MB",
+    metaTitle: "Reduce Image Size to Under 1 MB – Free",
     metaDescription:
       "Get any photo under a hard 1 MB limit and see it verified against that limit before you download.",
     intro:
@@ -191,7 +191,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "image-under-2mb": {
     h1: "Make an image under 2 MB",
-    metaTitle: "Compress an image to under 2 MB",
+    metaTitle: "Compress Image to Under 2 MB – Free Online",
     metaDescription:
       "Hit a 2 MB upload limit exactly, with the finished file checked against the limit before you download.",
     intro:
@@ -220,7 +220,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "reduce-photo-size-for-email": {
     h1: "Make a photo small enough to email",
-    metaTitle: "Reduce photo size for email attachments",
+    metaTitle: "Resize Photo for Email – Reduce Image Size",
     metaDescription:
       "Shrink photos so they send without bouncing. Set your provider's limit and we handle the rest, in your browser.",
     intro:
@@ -254,7 +254,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "resize-image": {
     h1: "Resize an image",
-    metaTitle: "Resize an image to exact dimensions",
+    metaTitle: "Resize Image Online – Exact Pixels, Free",
     metaDescription:
       "Resize a photo to the exact pixel dimensions you were asked for, checked against them before you download.",
     intro:
@@ -289,7 +289,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "profile-picture-resizer": {
     h1: "Resize a profile picture",
-    metaTitle: "Profile Picture Resizer — LinkedIn, Instagram, X, WhatsApp and more",
+    metaTitle: "Profile Picture Resizer – LinkedIn, Instagram, X",
     metaDescription:
       "Pick the platform your photo is going to and get a square profile picture sized and formatted for it, in your browser.",
     intro:
@@ -377,7 +377,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "crop-image": {
     h1: "Crop and rotate an image",
-    metaTitle: "Crop and rotate an image online",
+    metaTitle: "Crop & Rotate Image Online – Free Photo Cropper",
     metaDescription:
       "Rotate a sideways photo and crop it to a square, portrait or widescreen shape, entirely in your browser.",
     intro:
@@ -411,7 +411,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "watermark-image": {
     h1: "Add a watermark to an image",
-    metaTitle: "Add a text watermark to a photo",
+    metaTitle: "Add Watermark to Photo Online – Free",
     metaDescription:
       "Stamp a repeating text watermark across a photo before you share it online — runs entirely in your browser.",
     intro:
@@ -445,7 +445,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "jpg-to-png": {
     h1: "Convert JPG to PNG",
-    metaTitle: "Convert JPG to PNG",
+    metaTitle: "JPG to PNG Converter – Free Online",
     metaDescription:
       "Convert JPG photos to PNG in your browser. No upload, no watermark, no sign-up.",
     intro:
@@ -474,7 +474,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "png-to-jpg": {
     h1: "Convert PNG to JPG",
-    metaTitle: "Convert PNG to JPG",
+    metaTitle: "PNG to JPG Converter – Free Online",
     metaDescription:
       "Turn PNG images into smaller, universally accepted JPGs, entirely in your browser.",
     intro:
@@ -503,7 +503,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "webp-converter": {
     h1: "Convert images to WebP",
-    metaTitle: "Convert JPG and PNG to WebP",
+    metaTitle: "WebP Converter – JPG, PNG to WebP Free",
     metaDescription:
       "Convert images to WebP for faster page loads, without uploading anything.",
     intro:
@@ -532,7 +532,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "remove-location-from-photo": {
     h1: "Remove location data from a photo",
-    metaTitle: "Remove GPS and EXIF data from a photo",
+    metaTitle: "Remove EXIF & GPS Data From Photos – Free",
     metaDescription:
       "Strip GPS coordinates and camera metadata from photos before you share them. Runs in your browser.",
     intro:
@@ -599,7 +599,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "merge-pdf": {
     h1: "Merge PDF files",
-    metaTitle: "Merge PDF files into one document",
+    metaTitle: "Merge PDF Files Online – Combine PDFs Free",
     metaDescription:
       "Combine two or more PDFs into a single file, in the order you choose. Runs entirely in your browser.",
     intro:
@@ -640,7 +640,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "image-to-pdf": {
     h1: "Convert images to PDF",
-    metaTitle: "Combine images into a single PDF",
+    metaTitle: "Image to PDF Converter – JPG, PNG to PDF",
     metaDescription:
       "Turn one or more photos or scans into a single ordered PDF, entirely in your browser.",
     intro:
@@ -680,7 +680,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "pdf-remove-metadata": {
     h1: "Remove PDF metadata",
-    metaTitle: "Remove author, software and metadata from a PDF",
+    metaTitle: "Remove PDF Metadata – Author & Software Info",
     metaDescription:
       "Clear the author, software and revision history hidden inside a PDF's document properties, in your browser.",
     intro:
@@ -714,7 +714,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "split-pdf": {
     h1: "Split a PDF",
-    metaTitle: "Split a PDF by removing pages you do not need",
+    metaTitle: "Split PDF Online – Separate Pages Free",
     metaDescription:
       "Pick the pages to keep and save them as a new, smaller PDF. Runs in your browser.",
     intro:
@@ -749,7 +749,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "extract-pdf": {
     h1: "Extract pages from a PDF",
-    metaTitle: "Extract selected pages from a PDF",
+    metaTitle: "Extract Pages From PDF – Free Online",
     metaDescription:
       "Keep only the pages you want and save them as a new PDF, without uploading your file.",
     intro:
@@ -784,7 +784,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "delete-pdf-pages": {
     h1: "Delete pages from a PDF",
-    metaTitle: "Delete pages from a PDF online",
+    metaTitle: "Delete Pages From PDF Online – Free",
     metaDescription:
       "Remove unwanted pages from a PDF and save the cleaned version in your browser.",
     intro:
@@ -819,7 +819,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "organize-pdf": {
     h1: "Organize PDF pages",
-    metaTitle: "Reorder, rotate and delete PDF pages",
+    metaTitle: "Organize PDF – Reorder, Rotate, Delete Pages",
     metaDescription:
       "Put pages in the right order, rotate the ones that came in sideways, and drop the ones you don't need — all in your browser.",
     intro:
@@ -858,7 +858,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "rotate-pdf": {
     h1: "Rotate a PDF",
-    metaTitle: "Rotate every page of a PDF",
+    metaTitle: "Rotate PDF Online – Save Rotated Pages Free",
     metaDescription:
       "Turn a sideways or upside-down PDF the right way up — every page, one rotation, in your browser.",
     intro:
@@ -892,7 +892,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "compress-pdf": {
     h1: "Compress a PDF",
-    metaTitle: "Compress a PDF to any size you need",
+    metaTitle: "Compress PDF Online – Reduce PDF Size Free",
     metaDescription:
       "Shrink a PDF by recompressing the photos inside it, in your browser. Set the size you need.",
     intro:
@@ -926,7 +926,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "compress-pdf-under-2mb": {
     h1: "Make a PDF under 2 MB",
-    metaTitle: "Compress a PDF to under 2 MB",
+    metaTitle: "Compress PDF to Under 2 MB – Free Online",
     metaDescription:
       "Hit a 2 MB upload limit by recompressing the photos inside a PDF, with the result checked against the limit.",
     intro:
@@ -955,7 +955,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "pdf-to-jpg": {
     h1: "Convert a PDF to JPG",
-    metaTitle: "Convert PDF pages to JPG images",
+    metaTitle: "PDF to JPG Converter – Free Online",
     metaDescription:
       "Export every page of a PDF as a JPG, or just the pages you pick, entirely in your browser.",
     intro:

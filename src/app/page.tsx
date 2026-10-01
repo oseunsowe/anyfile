@@ -14,11 +14,15 @@ import { guides } from "@/lib/guides";
 import { pageMetadata } from "@/lib/seo";
 import { site } from "@/lib/site";
 
-export const metadata: Metadata = pageMetadata({
-  title: `${site.name} — ${site.tagline}`,
-  description: site.description,
-  path: "/",
-});
+export const metadata: Metadata = {
+  ...pageMetadata({
+    title: "Free PDF & Image Tools – Compress, Convert, Resize",
+    description:
+      "Compress PDFs, convert HEIC to JPG, resize images, merge PDFs and remove photo metadata. Free online tools that run in your browser, so your files stay private.",
+    path: "/",
+  }),
+  title: { absolute: "Free PDF & Image Tools – Compress, Convert, Resize | AnyFileKits" },
+};
 
 const faqs = [
   {

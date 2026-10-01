@@ -64,9 +64,7 @@ export function Hero() {
 
             <StaggerItem>
               <p className="mt-5 text-[1.0625rem] leading-relaxed text-ink-muted">
-                Upload a document or image, tell us where it&rsquo;s going, and{" "}
-                {site.name} works out the format, size, dimensions and
-                optimization for you.
+                Free online tools to compress PDFs, convert HEIC to JPG, resize images and merge PDFs. Tell {site.name} where your file is going and it works out the format, size and optimization for you, right in your browser.
               </p>
             </StaggerItem>
 
