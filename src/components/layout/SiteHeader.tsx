@@ -7,6 +7,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Logo } from "@/components/brand/Logo";
 import { ButtonLink } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { primaryNav } from "@/lib/site";
 
 export function SiteHeader() {
@@ -31,9 +32,14 @@ export function SiteHeader() {
           </nav>
 
           <div className="hidden items-center gap-2 lg:flex">
+            <ThemeToggle />
             <ButtonLink href="/#outcome" variant="solid" size="sm" className="rounded-full px-4">
               Start free
             </ButtonLink>
+          </div>
+
+          <div className="-mr-2 flex items-center lg:hidden">
+            <ThemeToggle />
           </div>
 
           <button

@@ -21,6 +21,8 @@ const ICONS = {
   // Controls and navigation
   upload: "upload-simple",
   menu: "list",
+  sun: "sun",
+  moon: "moon",
   close: "x",
   caretRight: "caret-right",
   caretUp: "caret-up",
