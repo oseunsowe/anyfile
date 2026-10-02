@@ -21,11 +21,12 @@ export async function generateMetadata({
   const { slug } = await params;
   const guide = getGuide(slug);
   if (!guide) return {};
-  return pageMetadata({
+  const meta = pageMetadata({
     title: guide.metaTitle,
     description: guide.description,
     path: `/guides/${slug}`,
   });
+  return { ...meta, title: { absolute: guide.metaTitle } };
 }
 
 export default async function GuidePage({ params }: PageProps<"/guides/[slug]">) {

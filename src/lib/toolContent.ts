@@ -377,7 +377,7 @@ export const toolContent: Record<string, ToolContent> = {
   // -------------------------------------------------------------------------
   "crop-image": {
     h1: "Crop and rotate an image",
-    metaTitle: "Crop & Rotate Image Online – Free Photo Cropper",
+    metaTitle: "Crop & Rotate Image Online – Free Cropper",
     metaDescription:
       "Rotate a sideways photo and crop it to a square, portrait or widescreen shape, entirely in your browser.",
     intro:

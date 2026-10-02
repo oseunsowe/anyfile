@@ -78,7 +78,7 @@ const baseGuides: readonly Guide[] = [
   {
     slug: "how-to-open-heic-files-on-windows",
     title: "How to open HEIC files on Windows",
-    metaTitle: "How to Open HEIC Files on Windows or Convert Them to JPG",
+    metaTitle: "How to Open HEIC Files on Windows (or Convert to JPG)",
     description:
       "iPhone photos saved as HEIC will not open on many Windows PCs and websites. Here is what HEIC is and how to convert it to JPG in seconds.",
     published: "2026-09-30",
@@ -124,7 +124,7 @@ const baseGuides: readonly Guide[] = [
   {
     slug: "how-to-remove-location-data-from-photos",
     title: "How to remove location data from photos",
-    metaTitle: "How to Remove Location (GPS) Data From Photos Before Sharing",
+    metaTitle: "Remove Location (GPS) Data From Photos Before Sharing",
     description:
       "Photos can silently carry the exact GPS coordinates of where they were taken. Here is how EXIF metadata works and how to strip it before you post.",
     published: "2026-09-30",
@@ -169,7 +169,7 @@ const baseGuides: readonly Guide[] = [
   {
     slug: "how-to-resize-a-photo-for-email",
     title: "How to resize a photo for email",
-    metaTitle: "How to Resize a Photo for Email (Keep It Under the Size Limit)",
+    metaTitle: "How to Resize a Photo for Email (Under the Size Limit)",
     description:
       "Email providers limit attachment size, and modern phone photos are huge. Learn the right dimensions and file size for sending photos by email.",
     published: "2026-09-30",
@@ -303,7 +303,7 @@ const baseGuides: readonly Guide[] = [
   {
     slug: "how-to-resize-a-profile-picture",
     title: "How to resize a profile picture for any platform",
-    metaTitle: "How to Resize a Profile Picture (Sizes for Every Platform)",
+    metaTitle: "How to Resize a Profile Picture for Any Platform",
     description:
       "The right profile picture size and shape for LinkedIn, Instagram, X, Gmail and more, plus how to crop and resize yours without distortion.",
     published: "2026-09-30",
@@ -430,7 +430,7 @@ const baseGuides: readonly Guide[] = [
   {
     slug: "how-to-remove-metadata-from-a-pdf",
     title: "How to remove metadata from a PDF",
-    metaTitle: "How to Remove Metadata From a PDF (Author, Title, Dates)",
+    metaTitle: "How to Remove Metadata From a PDF",
     description:
       "PDFs store hidden details such as author name, software and edit dates. Learn what is inside and how to clean it before you share.",
     published: "2026-09-30",

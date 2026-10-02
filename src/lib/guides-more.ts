@@ -49,7 +49,7 @@ export const moreGuides: readonly Guide[] = [
   {
     slug: "how-to-convert-jpg-to-png",
     title: "How to convert JPG to PNG (and when you should)",
-    metaTitle: "How to Convert JPG to PNG: What It Does and Doesn't Fix",
+    metaTitle: "How to Convert JPG to PNG (and When You Should)",
     description:
       "Converting JPG to PNG will not restore lost quality or make the background transparent. Here is what it is actually good for, and how to do it.",
     published: "2026-10-01",

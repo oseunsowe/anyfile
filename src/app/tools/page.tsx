@@ -30,6 +30,7 @@ export default function ToolsPage() {
             ]}
           />
           <SectionHeading
+            as="h1"
             title="All tools"
             description="Know exactly what you need? Pick a tool. Not sure? Drop your file on the home page and we will work it out."
           />

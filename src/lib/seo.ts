@@ -3,7 +3,14 @@ import { site } from "@/lib/site";
 
 /** Absolute URL for canonicals, OG images and structured data. */
 export function absoluteUrl(path = "/"): string {
-  return new URL(path, site.url).toString();
+  const url = new URL(path, site.url);
+  // The site is a static export served with trailing slashes. Canonicals,
+  // sitemap and structured data must all use the exact URL the server returns
+  // with a 200, so extensionless paths always end in "/".
+  if (!url.pathname.endsWith("/") && !/\.[a-z0-9]+$/i.test(url.pathname)) {
+    url.pathname += "/";
+  }
+  return url.toString();
 }
 
 type PageMetaInput = {

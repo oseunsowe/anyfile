@@ -21,7 +21,7 @@ export const metadata: Metadata = {
       "Compress PDFs, convert HEIC to JPG, resize images, merge PDFs and remove photo metadata. Free online tools that run in your browser, so your files stay private.",
     path: "/",
   }),
-  title: { absolute: "Free PDF & Image Tools – Compress, Convert, Resize | AnyFileKits" },
+  title: { absolute: "Free PDF & Image Tools – Compress, Convert | AnyFileKits" },
 };
 
 const faqs = [

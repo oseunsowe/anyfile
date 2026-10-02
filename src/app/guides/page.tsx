@@ -24,6 +24,7 @@ export default function GuidesIndexPage() {
           ]}
         />
         <SectionHeading
+          as="h1"
           title="File guides"
           description="Practical answers for the file problems that block you: size limits, wrong formats and privacy."
         />

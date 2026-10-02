@@ -24,14 +24,16 @@ export function SectionHeading({
   title,
   description,
   className,
+  as: Heading = "h2",
 }: {
+  as?: "h1" | "h2";
   title: string;
   description?: string;
   className?: string;
 }) {
   return (
     <div className={cn("max-w-2xl", className)}>
-      <h2 className="text-2xl font-semibold text-ink sm:text-[1.75rem]">{title}</h2>
+      <Heading className="text-2xl font-semibold text-ink sm:text-[1.75rem]">{title}</Heading>
       {description ? (
         <p className="mt-2 text-[0.9375rem] text-ink-muted">{description}</p>
       ) : null}
